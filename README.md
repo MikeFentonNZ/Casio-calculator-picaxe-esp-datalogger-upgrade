@@ -9,9 +9,9 @@ Updated from Michael Fenton's original work in the mid 2000's. Next-generation u
 ## Quick links
 
 * Project site: https://mikefentonnz.github.io/projects/casio-calculator-sensor-upgrade.html
-* Download teacher lesson pack: /lesson-pack.pdf
-* Multi-sensor unit firmware examples (Picaxe, ESP8266, ESP32): /firmware
-* Casio FX-9750GIII calculator program: /calculator
+* Download teacher lesson pack: /teaching\_resources
+* Multi-sensor unit firmware examples (Picaxe, ESP8266, ESP32): /datalogger\_sensor\_unit
+* Casio FX-9750GIII calculator program: /casio\_calculator\_program
 
 ## Why this matters
 
