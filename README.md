@@ -52,11 +52,11 @@ Updated from Michael Fenton's original work in the mid 2000's. Next-generation u
 
 ## Repository layout
 
-* /firmware — microcontroller example code for Picaxe, ESP8266, ESP32
-* /calculator — Casio BASIC datalogger program and installation notes
-* /diagrams — wiring diagrams, SB-62 breakout images, pinouts
-* /lesson-pack.pdf — teacher worksheets, slide deck, assessment rubrics
-* /videos — short demo clips of setup and classroom use
+* /datalogger\_sensor\_unit — microcontroller example code for Picaxe, ESP8266, ESP32.
+* /casio\_calculator\_program — Casio BASIC datalogger program and installation notes.
+* /images\_video — wiring diagrams, assembly, using the datalogger, teaching examples.
+* /teaching\_resources — worksheets, slide deck, notes.
+* /original\_version — Michael's education research report and analysis on classroom use.
 * README.md — this file
 * LICENSE — code license and lesson material license
 
