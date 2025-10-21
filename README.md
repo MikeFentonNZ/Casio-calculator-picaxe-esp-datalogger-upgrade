@@ -4,11 +4,11 @@ Public URL: **https://MikeFentonNZ.github.io**
 
 
 
-Updated from Michael Fenton's original work in the mid 2000's. Next-generation ultra-low-cost open-source project that connects Casio FX-9750 and FX-9860 graphing calculators to $6 USD Picaxe, ESP8266, and ESP32 microcontroller sensor units. 
+Updated from Michael Fenton's original work in the mid 2000's. Next-generation ultra-low-cost open-source project that connects Casio FX-9750 and FX-9860 graphing calculators to $6 USD Picaxe, ESP8266, and ESP32 microcontroller sensor units.
 
 
 
-Michael has identified a method that allows the Casio FX 9750G and FX 9860G calculators to pause indefinitely during a RECEIVE() operation without triggering a COM ERROR. This enables external sensor units to send data at preset intervals (e.g., every 10 seconds, every minute) without requiring specialized hardware such as the EA 200 Data Analyzer, CLAB or E-Con application. Michael's system realises a hundred-fold decrease in cost.
+Michael has identified a method that allows the Casio FX 9750G and FX 9860G calculators to pause during a RECEIVE() operation without triggering a COM ERROR. This enables external sensor units to send data at preset intervals (e.g., every 10 seconds, every minute) without requiring specialized hardware such as the EA 200 Data Analyzer, CLAB or E-Con application. Michael's system realises a hundred-fold decrease in cost.
 
 
 
@@ -25,7 +25,7 @@ This site will archive program code, wiring diagrams, and teaching resources for
 
 
 
-* Bypasses a known limitation: The FX 9750G and its relatives are notorious for their strict communication timeouts (≈ 0.1 to 1s). Normally, this prevents any long interval data logging directly over the SB-62 cable. SAfely and reliably pauseing mid RECEIVE() sidesteps one of the calculator’s biggest constraints.
+* Bypasses a known limitation: The FX 9750G and its relatives are notorious for their strict communication timeouts (≈ 0.1 to 1s). Normally, this prevents any long interval data logging directly over the SB-62 cable. Safely and reliably pausing mid RECEIVE() sidesteps one of the calculator’s biggest constraints.
 * Enables true interval logging without extra hardware: Until now, the only practical way to do timed sampling was to use Casio’s EA 200/CBL2 data analyzer of CLAB, which has its own clock. Michael's  method allows a simple sensor unit to handle timing and still communicate directly with the calculator, eliminating the need for expensive proprietary peripherals.
 * Expands the calculator’s role in experiments: In education and hobbyist science, this means the FX 9750G or FX 9860 could be used as a lightweight data logger for physics, chemistry, or environmental monitoring — something previously limited by the COM ERROR timeout.
 * Potential for open source adoption: A new tool for interfacing calculators with sensors.
