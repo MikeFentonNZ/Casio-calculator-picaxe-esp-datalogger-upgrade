@@ -8,6 +8,10 @@ Updated from Michael Fenton's original work in the mid 2000's. Next-generation u
 
 
 
+Michael Fenton addresses a significant limitation with using these calculators in science classes - the inability to carry out automated time interval data logging. This significant upgrade and new timing ability addresses critical equity gaps in STEM education by enabling ultra low-cost sensor data logging for authentic STEM investigations at school, at home, across subject areas and at all years levels.
+
+
+
 Michael has identified a method that allows the Casio FX 9750G and FX 9860G calculators to pause during a RECEIVE() operation without triggering a COM ERROR. This enables external sensor units to send data at preset intervals (e.g., every 10 seconds, every minute) without requiring specialized hardware such as the EA 200 Data Analyzer, CLAB or E-Con application. Michael's system realises a hundred-fold decrease in cost.
 
 
@@ -69,7 +73,7 @@ This site will archive program code, wiring diagrams, and teaching resources for
 
 * /datalogger\_sensor\_unit — microcontroller example code for Picaxe, ESP8266, ESP32.
 * /casio\_calculator\_program — Casio BASIC datalogger program and installation notes.
-* /images\_video — wiring diagrams, assembly, using the datalogger, teaching examples.
+* /images\_video — Casio FX-9750 serial protocol, assembly, using the datalogger, teaching examples.
 * /teaching\_resources — worksheets, slide deck, notes.
 * /original\_version — Michael's education research report and analysis on classroom use.
 * README.md — this file
