@@ -1,0 +1,166 @@
+<svg viewBox="0 0 860 1400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Define styles -->
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 28px; font-weight: bold; fill: #1f2937; }
+      .subtitle { font-family: Arial, sans-serif; font-size: 14px; fill: #6b7280; }
+      .section-title { font-family: Arial, sans-serif; font-size: 20px; font-weight: bold; fill: #1f2937; }
+      .label { font-family: Arial, sans-serif; font-size: 13px; fill: #374151; }
+      .data { font-family: 'Courier New', monospace; font-size: 12px; fill: #1f2937; font-weight: bold; }
+      .desc { font-family: Arial, sans-serif; font-size: 11px; fill: #6b7280; }
+      .step-num { font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; fill: white; }
+      .entity { font-family: Arial, sans-serif; font-size: 12px; font-weight: 600; fill: #374151; }
+      .note-text { font-family: Arial, sans-serif; font-size: 12px; fill: #92400e; }
+      .spec-text { font-family: Arial, sans-serif; font-size: 12px; fill: #1f2937; }
+      
+      .casio-box { fill: #f3e8ff; stroke: #9333ea; stroke-width: 2; }
+      .device-box { fill: #dcfce7; stroke: #16a34a; stroke-width: 2; }
+      .step-circle { fill: #3b82f6; }
+      .arrow-casio { stroke: #3b82f6; stroke-width: 2; fill: none; marker-end: url(#arrowhead-blue); }
+      .arrow-device { stroke: #16a34a; stroke-width: 2; fill: none; marker-end: url(#arrowhead-green); }
+    </style>
+    
+    <!-- Arrow markers -->
+    <marker id="arrowhead-blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#3b82f6" />
+    </marker>
+    <marker id="arrowhead-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#16a34a" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="360" y="35" class="title" text-anchor="middle">Casio FX-9750 Serial Protocol</text>
+  <text x="360" y="55" class="subtitle" text-anchor="middle">Michael Fenton method for time interval paused communication flow</text>
+
+  <!-- Connection specs box -->
+  <rect x="40" y="70" width="600" height="80" fill="#dbeafe" stroke="#3b82f6" stroke-width="2" rx="8"/>
+  <text x="60" y="90" class="label" font-weight="bold">Connection Details:</text>
+  <text x="200" y="90" class="spec-text">• TTL (5V/0V 9750G) (3V/0V 9750GIII) • Half-duplex • 9600 baud</text>
+  <text x="200" y="108" class="spec-text">• 8 data bits, no parity • 2.5mm stereo jack</text>
+  <text x="200" y="126" class="spec-text">• Stop bits: 2 (from Casio) / 1 (to Casio)</text>
+  <text x="200" y="144" class="spec-text">• Timeout: 0.5-1s for initial handshakes</text>
+
+  <!-- Receive Protocol Section -->
+  <text x="10" y="190" class="section-title">Casio Receive() from Picaxe or ESP device</text>
+  
+  <!-- Entity labels for Receive -->
+  <text x="115" y="220" class="entity">CASIO</text>
+  <text x="550" y="205" class="entity">PICAXE or</text>
+  <text x="550" y="220" class="entity">ESP8266</text>
+
+  <!-- Vertical lines -->
+  <line x1="140" y1="230" x2="140" y2="950" stroke="#9333ea" stroke-width="3" stroke-dasharray="5,5"/>
+  <line x1="580" y1="230" x2="580" y2="950" stroke="#16a34a" stroke-width="3" stroke-dasharray="5,5"/>
+
+  <!-- Receive Steps -->
+  <!-- Step 1: 0x15 -->
+  <circle cx="60" cy="255" r="16" class="step-circle"/>
+  <text x="60" y="260" class="step-num" text-anchor="middle">1</text>
+  <line x1="140" y1="255" x2="580" y2="255" class="arrow-casio"/>
+  <rect x="280" y="238" width="200" height="34" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5" rx="4"/>
+  <text x="380" y="253" class="label" text-anchor="middle" font-weight="bold">Attention Request</text>
+  <text x="380" y="266" class="data" text-anchor="middle">0x15</text>
+
+  <!-- Step 2: 0x13 -->
+  <circle cx="60" cy="315" r="16" class="step-circle"/>
+  <text x="60" y="320" class="step-num" text-anchor="middle">2</text>
+  <line x1="580" y1="315" x2="140" y2="315" class="arrow-device"/>
+  <rect x="280" y="298" width="200" height="34" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5" rx="4"/>
+  <text x="380" y="313" class="label" text-anchor="middle" font-weight="bold">Device Present</text>
+  <text x="380" y="326" class="data" text-anchor="middle">0x13</text>
+
+  <!-- Step 3: Request -->
+  <circle cx="60" cy="380" r="16" class="step-circle"/>
+  <text x="60" y="385" class="step-num" text-anchor="middle">3</text>
+  <line x1="140" y1="380" x2="580" y2="380" class="arrow-casio"/>
+  <rect x="260" y="363" width="240" height="34" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5" rx="4"/>
+  <text x="380" y="378" class="label" text-anchor="middle" font-weight="bold">Request Packet</text>
+  <text x="380" y="391" class="data" text-anchor="middle">50 bytes</text>
+
+  <!-- Step 4: ACK -->
+  <circle cx="60" cy="440" r="16" class="step-circle"/>
+  <text x="60" y="445" class="step-num" text-anchor="middle">4</text>
+  <line x1="580" y1="440" x2="140" y2="440" class="arrow-device"/>
+  <rect x="310" y="423" width="140" height="34" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5" rx="4"/>
+  <text x="380" y="438" class="label" text-anchor="middle" font-weight="bold">ACK</text>
+  <text x="380" y="451" class="data" text-anchor="middle">0x06</text>
+
+  <!-- Step 5: Ready -->
+  <circle cx="60" cy="505" r="16" class="step-circle"/>
+  <text x="60" y="510" class="step-num" text-anchor="middle">5</text>
+  <line x1="140" y1="505" x2="580" y2="505" class="arrow-casio"/>
+  <rect x="310" y="488" width="140" height="34" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5" rx="4"/>
+  <text x="380" y="503" class="label" text-anchor="middle" font-weight="bold">Ready</text>
+  <text x="380" y="516" class="data" text-anchor="middle">0x06</text>
+
+  <!-- Step 6: Variable Description -->
+  <circle cx="60" cy="565" r="16" class="step-circle"/>
+  <text x="60" y="570" class="step-num" text-anchor="middle">6</text>
+  <line x1="580" y1="565" x2="140" y2="565" class="arrow-device"/>
+  <rect x="230" y="548" width="300" height="34" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5" rx="4"/>
+  <text x="380" y="563" class="label" text-anchor="middle" font-weight="bold">Variable Description Packet</text>
+  <text x="380" y="576" class="data" text-anchor="middle">50 bytes</text>
+
+  <!-- Step 7: Ready -->
+  <circle cx="60" cy="630" r="16" class="step-circle"/>
+  <text x="60" y="635" class="step-num" text-anchor="middle">7</text>
+  <line x1="140" y1="630" x2="580" y2="630" class="arrow-casio"/>
+  <rect x="310" y="613" width="140" height="34" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5" rx="4"/>
+  <text x="380" y="628" class="label" text-anchor="middle" font-weight="bold">Ready</text>
+  <text x="380" y="641" class="data" text-anchor="middle">0x06</text>
+
+  <!-- PAUSE HERE WITHOUT COM ERROR -->
+  <rect x="480" y="680" width="180" height="34" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5" rx="4"/>
+  <text x="570" y="695" class="label" text-anchor="middle" font-weight="bold">PAUSE LOOP</text>
+  <text x="570" y="705" class="data" text-anchor="middle">Permits interval logging</text>
+
+  <!-- Step 8: Value Packet -->
+  <circle cx="60" cy="755" r="16" class="step-circle"/>
+  <text x="60" y="760" class="step-num" text-anchor="middle">8</text>
+  <line x1="580" y1="755" x2="140" y2="755" class="arrow-device"/>
+  <rect x="200" y="738" width="360" height="34" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5" rx="4"/>
+  <text x="380" y="753" class="label" text-anchor="middle" font-weight="bold">Value Packet (or skip if empty)*</text>
+  <text x="380" y="766" class="data" text-anchor="middle">16/26 bytes</text>
+
+  <!-- Step 9: ACK -->
+  <circle cx="60" cy="820" r="16" class="step-circle"/>
+  <text x="60" y="825" class="step-num" text-anchor="middle">9</text>
+  <line x1="140" y1="825" x2="580" y2="825" class="arrow-casio"/>
+  <rect x="310" y="808" width="140" height="34" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5" rx="4"/>
+  <text x="380" y="823" class="label" text-anchor="middle" font-weight="bold">ACK*</text>
+  <text x="380" y="836" class="data" text-anchor="middle">0x06</text>
+
+  <!-- Step 10: End Packet -->
+  <circle cx="60" cy="885" r="16" class="step-circle"/>
+  <text x="60" y="890" class="step-num" text-anchor="middle">10</text>
+  <line x1="580" y1="885" x2="140" y2="885" class="arrow-device"/>
+  <rect x="260" y="868" width="240" height="34" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5" rx="4"/>
+  <text x="380" y="883" class="label" text-anchor="middle" font-weight="bold">End Packet</text>
+  <text x="380" y="896" class="data" text-anchor="middle">50 bytes</text>
+
+  <!-- Notes Section -->
+  <rect x="40" y="985" width="600" height="160" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" rx="8"/>
+  <text x="60" y="1005" class="label" font-weight="bold">Important Notes:</text>
+  <text x="60" y="1023" class="note-text">• Steps marked with * are skipped if variable is empty/unused</text>
+  <text x="60" y="1039" class="note-text">• Value packet: 16 bytes (real) or 26 bytes (complex with imaginary part)</text>
+  <text x="60" y="1055" class="note-text">• Timeout: 0.5-1 second for initial handshake, else Com ERROR displayed</text>
+  <text x="60" y="1071" class="note-text">• Error code 0x22 sent by Casio on any communication error</text>
+  <text x="60" y="1087" class="note-text">• Empty variables: 0 bytes, real: 10 bytes, complex: 20 bytes in memory</text>
+  <text x="60" y="1103" class="note-text">• Variable range: ±1.0×10⁻⁹⁹ to ±9.99999999999999×10⁹⁹ (15 significant digits)</text>
+  <text x="60" y="1119" class="note-text">• Variables: A-Z (0x41-0x5A), r (0xCD), θ (0xCE) - stored in Alpha Memory</text>
+
+  <!-- Packet Types -->
+  <rect x="40" y="1165" width="600" height="130" fill="#e0e7ff" stroke="#6366f1" stroke-width="2" rx="8"/>
+  <text x="60" y="1185" class="label" font-weight="bold">Packet Types &amp; Structure:</text>
+  <text x="60" y="1203" class="note-text">• :REQ (Request) - 50 bytes - Casio requests specific variable by name</text>
+  <text x="60" y="1219" class="note-text">• :VAL (Variable Description) - 50 bytes - Contains metadata, variable name, type (real/complex)</text>
+  <text x="60" y="1235" class="note-text">• :END (End) - 50 bytes - Always constant values, signals communication complete</text>
+  <text x="60" y="1251" class="note-text">• Value packets - 16/26 bytes - BCD encoded mantissa and exponent with checksums</text>
+  <text x="60" y="1267" class="note-text">• Format: ±I.decimals × 10^EE where I is integer part (1-9), decimals are 14 digits</text>
+  <text x="60" y="1283" class="note-text">• All packets include checksums calculated as: 0x01 + NOT((sum of bytes) - 0x3A)</text>
+
+  <!-- Footer -->
+  <text x="350" y="1330" class="note-text" text-anchor="middle">(c) Michael Fenton (2025) - FX-9750G serial communication protocol with pause mid-RECEIVE() without COM error</text>
+  <text x="350" y="1350" class="desc" text-anchor="middle">Based on protocol analysis by Erik Grindheim (2001) - CFX-9850G series Power Graphic calculators</text>
+</svg>

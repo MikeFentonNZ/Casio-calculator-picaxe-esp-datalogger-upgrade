@@ -1,0 +1,131 @@
+// ===========================================
+// Casio FX-9750GIII Multi-Sensor Data Logger
+// Works with Picaxe 08M2/14M2 or 
+// ESP8266 via SB-62 serial cable
+// Receives data at user-defined intervals or 
+// manual trigger
+// (C) Michael Fenton 2025
+// ===========================================
+// List 1,998 // Elapsed time
+// List 2,998 // Data point counter
+// List 3,998 // Sensor A data
+// List 4,998 // Sensor B data
+// List 5,998 // Sensor C data
+
+// ===================================================================
+// Casio FX-9750GIII Multi-Sensor Data Logger
+// Works with Picaxe 08M2/14M2 or ESP8266 via SB-62 serial cable
+// ===================================================================
+// Initialize variables
+0->N // Number of sensors
+0->I // Sample number counter
+0->T // Time interval code (1-5)
+0->E // Elapsed time as I * time interval
+ClrText
+// Query how many sensors are connected
+Locate 1,1,"CONNECTING..."
+Receive(N)
+// =======================================
+// Select sampling interval
+// =======================================
+Lbl 1
+ClrText
+Locate 1,2,"SENSORS FOUND"
+Locate 16,2,N
+Locate 1,4,"CHOOSE INTERVAL"
+Locate 1,5,"1) 5 SEC   4) 60 SEC"
+Locate 1,6,"2) 10 SEC  5) PRESS +"
+Locate 1,7,"3) 15 SEC"
+?->T
+If T<1
+Then Goto 1
+IfEnd
+If T>5
+Then Goto 1
+IfEnd
+// Send time interval to microcontroller
+Send(T)
+ClrText
+Locate 1,1,"Request "
+Locate 9,1,N
+Locate 11,1," sensor(s)"
+If T=1
+Then 5->T
+Locate 1,2,"@5s"
+IfEnd
+If T=2
+Then 10->T
+Locate 1,2,"@10s"
+IfEnd
+If T=3
+Then 15->T
+Locate 1,2,"@15s"
+IfEnd
+If T=4
+Then 60->T
+Locate 1,2,"@60s"
+IfEnd
+If T=5
+Then 0->T
+Locate 1,2,"@Manual"
+IfEnd
+Locate 11,2,"AC = stop"
+Locate 1,3,"Sample: "
+Locate 1,4,"A: "
+If N>1
+ Then Locate 10,4,"B: "
+IfEnd
+If N>2 
+ Then Locate 1,5,"C: "
+IfEnd
+Locate 1,6,"Elapsed (s): "
+// ==========================
+// Main data collection loop
+// ==========================
+Lbl 2
+I+1->I
+// Receive elapsed time
+Receive(E)
+E->List 1[I]
+// Store sequence number
+I->List 2[I]
+// Always receive Sensor A
+Receive(A)
+A->List 3[I]
+// Receive Sensor B if needed
+If N>1 
+ Then Receive(B)
+ B->List 4[I]
+IfEnd
+// Receive Sensor D if needed
+If N>2 
+ Then Receive(C)
+ C->List 5[I]
+IfEnd
+// Display sample number
+Locate 9,3,I
+//Display Sensor A
+Locate 4,4,List 3[I]
+//Display Sensor B  
+If N>1
+  Locate 14,4,List 4[I]
+IfEnd
+//Display Sensor C  
+If N>2 
+  Locate 5,4,List 5[I]
+IfEnd
+//Display Elapsed Time  
+Locate 13,6,List 1[I]
+// Check if maximum samples reached
+If I>998
+ Then ClrText
+ Locate 1,1,"MAXIMUM LIMIT"
+ Locate 1,3,I
+ Locate 3,3," samples recorded"
+ Locate 1,5,"Data in Lists 1-5"
+ Locate 1,7,"Press EXE"
+ Getkey
+ Stop
+IfEnd
+// Continue monitoring loop
+Goto 2
