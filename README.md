@@ -30,13 +30,14 @@ This site will archive program code, wiring diagrams, and teaching resources for
 
 
 * Bypasses a known limitation: The FX 9750G and its relatives are notorious for their strict communication timeouts (≈ 0.1 to 1s). Normally, this prevents any long interval data logging directly over the SB-62 cable. Safely and reliably pausing mid RECEIVE() sidesteps one of the calculator’s biggest constraints.
-* Enables true interval logging without extra hardware: Until now, the only practical way to do timed sampling was to use Casio’s EA 200/CBL2 data analyzer of CLAB, which has its own clock. Michael's  method allows a simple sensor unit to handle timing and still communicate directly with the calculator, eliminating the need for expensive proprietary peripherals.
+* Enables true interval logging without extra hardware: Until now, the only practical way to do timed sampling is using CLAB, which has its own clock. Michael's  method allows a simple sensor unit to handle timing and still communicate directly with the calculator, eliminating the need for expensive proprietary peripherals.
 * Expands the calculator’s role in experiments: In education and hobbyist science, this means the FX 9750G or FX 9860 could be used as a lightweight data logger for physics, chemistry, or environmental monitoring — something previously limited by the COM ERROR timeout.
 * Potential for open source adoption: A new tool for interfacing calculators with sensors.
 * This upgrade makes science data recording portable and affordable ($6 USD budget). Use in any class, take to the fields, the gym, on a walk, on holiday.
 * Ultra-low-cost sensors: Works with cheap low-cost DIY / home-made and low-cost sensors; measure range (distance), water vapour, temperature, pressure, alpha radiation, visible light, ultra violet (UV) light, infra red (IR) light, water hardness, salinity, static electric fields, mobile phone signals, angles, magnetic fields, and more.
 * Democratising STEM Education: This system fundamentally challenges the traditional model where "fragile" and "expensive" equipment is reserved for senior students.
 * Flexible curriculum uses across music, physical education, chemistry, physics, biology, environmental science, and mathematics.
+ * Total hardware cost is approximately USD $6–$10. At this price point, the use of AI-generated or simulated scientific data in the classroom becomes a choice requiring active justification rather than a practical necessity; other researchers have raised legitimate concerns that AI training datasets may be compromised by the proliferation of fabricated or low-quality research in the scientific literature. Where authentic, real-world empirical data can be collected cheaply and reliably, it should be. 
 
 ## Features
 
