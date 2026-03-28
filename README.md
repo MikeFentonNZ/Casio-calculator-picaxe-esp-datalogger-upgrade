@@ -21,8 +21,8 @@ This site will archive program code, wiring diagrams, and teaching resources for
 ## Quick links
 
 * Project site: https://mikefentonnz.github.io/projects/casio-calculator-sensor-upgrade.html
-* Download teacher lesson pack: /teaching\_resources
-* Multi-sensor unit firmware examples (Picaxe, ESP8266, ESP32): /datalogger\_sensor\_unit
+* Teacher notes : /teaching\_resources
+* Single-sensor unit firmware example (Picaxe): /datalogger\_sensor\_unit
 * Casio FX-9750GIII calculator program: /casio\_calculator\_program
 
 ## Why this matters
@@ -71,7 +71,7 @@ This site will archive program code, wiring diagrams, and teaching resources for
 
 ## Repository layout
 
-* /datalogger\_sensor\_unit — microcontroller example code for Picaxe, ESP8266, ESP32.
+* /datalogger\_sensor\_unit — microcontroller example code for Picaxe.
 * /casio\_calculator\_program — Casio BASIC datalogger program and installation notes.
 * /images\_video — Casio FX-9750 serial protocol, assembly, using the datalogger, teaching examples.
 * /teaching\_resources — worksheets, slide deck, notes.
