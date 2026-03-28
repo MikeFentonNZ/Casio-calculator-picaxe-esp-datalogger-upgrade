@@ -1,6 +1,5 @@
 // ===========================================
-// Casio FX-9750GIII Multi-Sensor Data Logger
-// This is non-synchronous.
+// Casio FX-9750GIII Single Sensor Data Logger
 // Synchronous multi-sensor logging is being 
 // prepared for publication. 
 // Works with Picaxe 08M2/14M2 or 
@@ -12,8 +11,6 @@
 // List 1,998 // Elapsed time
 // List 2,998 // Data point counter
 // List 3,998 // Sensor A data
-// List 4,998 // Sensor B data
-// List 5,998 // Sensor C data
 // Initialise variables
 0->N // Number of sensors
 0->I // Sample number counter
@@ -90,28 +87,10 @@ I->List 2[I]
 // Always receive Sensor A
 Receive(A)
 A->List 3[I]
-// Receive Sensor B if needed
-If N>1 
- Then Receive(B)
- B->List 4[I]
-IfEnd
-// Receive Sensor D if needed
-If N>2 
- Then Receive(C)
- C->List 5[I]
-IfEnd
 // Display sample number
 Locate 9,3,I
 //Display Sensor A
 Locate 4,4,List 3[I]
-//Display Sensor B  
-If N>1
-  Locate 14,4,List 4[I]
-IfEnd
-//Display Sensor C  
-If N>2 
-  Locate 5,4,List 5[I]
-IfEnd
 //Display Elapsed Time  
 Locate 13,6,List 1[I]
 // Check if maximum samples reached
