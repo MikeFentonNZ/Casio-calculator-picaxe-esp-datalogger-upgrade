@@ -37,7 +37,9 @@ This site will archive program code, wiring diagrams, and teaching resources for
 * Ultra-low-cost sensors: Works with cheap low-cost DIY / home-made and low-cost sensors; measure range (distance), water vapour, temperature, pressure, alpha radiation, visible light, ultra violet (UV) light, infra red (IR) light, water hardness, salinity, static electric fields, mobile phone signals, angles, magnetic fields, and more.
 * Democratising STEM Education: This system fundamentally challenges the traditional model where "fragile" and "expensive" equipment is reserved for senior students.
 * Flexible curriculum uses across music, physical education, chemistry, physics, biology, environmental science, and mathematics.
- * Total hardware cost is approximately USD $6–$10. At this price point, the use of AI-generated or simulated scientific data in the classroom becomes a choice requiring active justification rather than a practical necessity; other researchers have raised legitimate concerns that AI training datasets may be compromised by the proliferation of fabricated or low-quality research in the scientific literature. Where authentic, real-world empirical data can be collected cheaply and reliably, it should be. 
+* Total hardware cost is approximately USD $6–$10. At this price point, the use of AI-generated or simulated scientific data in the classroom becomes a choice requiring active justification rather than a practical necessity; other researchers have raised legitimate concerns that AI training datasets may be compromised by the proliferation of fabricated or low-quality research in the scientific literature. Where authentic, real-world empirical data can be collected cheaply and reliably, it should be.
+* Simultaneous synchronous multi-sensor transmission paper in preparation. SHA-256 hash of manuscript in preparation, March 2026: \[6F0C9402CD3F0715F3660BC864322569D40205D0C96F509097A62C10A98B0B3A]
+* Priority disclosure for the MFE invention: https://zenodo.org/records/19303911
 
 ## Features
 
