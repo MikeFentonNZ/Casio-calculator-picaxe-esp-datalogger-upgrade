@@ -1,0 +1,2 @@
+8 character limit for file name
+NO ability to create comments or remarks
