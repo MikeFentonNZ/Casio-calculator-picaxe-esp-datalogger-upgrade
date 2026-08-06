@@ -29,7 +29,7 @@ This site will archive program code, wiring diagrams, and teaching resources for
 
 
 
-* Bypasses a known limitation: The FX 9750G and its relatives are notorious for their strict communication timeouts (≈ 0.1 to 1s). Normally, this prevents any long interval data logging directly over the SB-62 cable. Safely and reliably pausing mid RECEIVE() sidesteps one of the calculator’s biggest constraints.
+* Bypasses a known limitation: The FX 9750G and its relatives do not have an internal timer or 'WAIT' or 'DELAY' or 'PAUSE' commands to permit interval timing. These calculators also trigger timeout COM errors during data packet transfer if certain expected responses are delayed (≈ 0.1 to 1s). Normally, this prevents any long interval data logging directly over the SB-62 cable. Safely and reliably pausing mid RECEIVE() sidesteps one of the calculator’s biggest constraints.
 * Enables true interval logging without extra hardware: Until now, the only practical way to do timed sampling is using CLAB, which has its own clock. Michael's  method allows a simple sensor unit to handle timing and still communicate directly with the calculator, eliminating the need for expensive proprietary peripherals.
 * Expands the calculator’s role in experiments: In education and hobbyist science, this means the FX 9750G or FX 9860 could be used as a lightweight data logger for physics, chemistry, or environmental monitoring — something previously limited by the COM ERROR timeout.
 * Potential for open source adoption: A new tool for interfacing calculators with sensors.
@@ -43,18 +43,21 @@ This site will archive program code, wiring diagrams, and teaching resources for
 
 ## Features
 
-* Compatible calculators: Casio FX-9750 and FX-9860 series.
+* Compatible calculators: Casio FX-9750 and FX-9860 series. Likely other Casio models that use the 2.5mm serial communication port and SB-62 cable.
 * Timestamped data collection using mid-RECEIVE() pause with no COM error.
-* Microcontrollers supported: Picaxe 08M2/14M2, ESP8266 (e.g., Wemos D1 mini), ESP32.
+* Full bi-directional communication. Permits the Casio to be used as a remote control unit. 
+* Sensor readings and a status or application flag.
+* Industrial measurement and control (IMC) simulation as a consequence of the above two bullet points.
+* Microcontrollers supported: Picaxe 08M2,14M2, 18X and others; ESP8266 (e.g., Wemos D1 mini), ESP32, BBC Micro:bit (V1 and V2).
 * Web-based data sharing option: Live data served as webpages with graphs accessible on smartphones, tablets, and laptops.
 * Optional wireless bi-directional communication: Over 200-metre range for remote data collection and remote equipment control. Drive a robot using your calculator!
-* Interface: Casio SB-62 3-pin TTL serial at 3.3V logic.
+* Interface: Casio SB-62 3-pin TTL serial at 3.3V logic. Can be connected to older Casio models with 5V serial using voltage adapter circuit.
 * Provided assets: Casio BASIC datalogger program, microcontroller firmware, wiring diagrams, teacher notes, research on use in class, lesson ideas, slide deck.
-* License: MIT for code; Creative Commons Attribution 4.0 for lesson materials.
+* License: Creative Commons BY-NC-SA 4.0.
 
 ## Quick start for teachers
 
-1. Gather parts: Casio SB-62 cable or breakout; Picaxe/ESP32/Wemos; battery pack; one sensor; jumper wires.
+1. Gather parts: Casio SB-62 cable or breakout; Picaxe/ESP32/Wemos/Microbit; battery pack; one sensor; jumper wires.
 2. Flash firmware: Copy example firmware from /firmware to the microcontroller.
 3. Install calculator program: Upload the Casio BASIC datalogger from /calculator to student calculators.
 4. Wire and test: Connect sensor to microcontroller and microcontroller TX/RX to the SB-62 breakout using 3.3V logic only.
