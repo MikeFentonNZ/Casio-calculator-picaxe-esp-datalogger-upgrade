@@ -33,9 +33,11 @@ The encoding method is withheld pending peer-reviewed publication.
 
 Files are being released in stages.
 
-* `/casio\\\_calclculator\\\_program` — the Casio BASIC datalogger program in `.txt` and `.g1m` form, a key-code utility, and installation notes. 
-* `/images\\\_video` — Casio serial protocol diagrams, assembly, and use.
-* `/original\\\_version` — the 2008 education research report and analysis of classroom use.
+* `casio_calculator_program` — the Casio BASIC datalogger program in `.txt` and `.g1m` form, a key-code utility, and installation notes. 
+* 'microcontroller_sensor_programs' - Picaxe, ESP8266, ESP32, and Microbit programs
+* `images_video` — Casio serial protocol diagrams, assembly, and use.
+* `original_2007-2010-classroom-research` — the 2008 education research report, conference presentations, sensor builds,and analysis of classroom use.
+* 'teaching_resources' - student and teacher guides, experiments, sensor construction.
 * `LICENSE`, `README.md`, `.gitattributes`
 
 **Next release:** ESP8266 and ESP32 firmware, BBC Micro:bit firmware, wiring diagrams, protocol notes, and the experiment manual.
