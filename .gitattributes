@@ -1,0 +1,19 @@
+# Line endings are declared, not left to chance.
+# The Casio BASIC listings and Picaxe sources are edited in Notepad on Windows
+# and are transferred to the calculator as-is: their CRLF endings are part of
+# the file, not an accident of the editor. Everything else is normalised to LF.
+
+* text=auto eol=lf
+
+*.txt   text eol=crlf
+*.bas   text eol=crlf
+*.basx  text eol=crlf
+*.ino   text eol=crlf
+
+*.g1m   binary
+*.G1M   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.pdf   binary
+*.mp4   binary

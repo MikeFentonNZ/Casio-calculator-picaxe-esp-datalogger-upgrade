@@ -1,0 +1,47 @@
+ Casio-HMI-example-08M2.bas
+ (C) Michael Fenton, MRSNZ, 2026
+ Licence: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International 
+ (CC BY-NC-SA 4.0)
+ 
+ The calculator as a Human-Machine Interface (HMI), not a logger.
+
+ Two RECEIVE() windows (GAP 1 and GAP 2 in code below) discovered 2007/2008
+ using Picaxe 18X connected to a Casio FX-9750G Plus. See the author's
+ New Zealand Ministry of Education E-Learning Fellowship report and 
+ conference paper; 
+
+ 1) Authentic Learning Using Mobile Sensor Technology (2008): https://doi.org/10.5281/zenodo.19302276
+ 2) RIGEL - Learning From Life, Kuala Lumpur (2009): https://doi.org/10.5281/zenodo.19334228
+
+ https://mikefentonnz.github.io/projects/casio-calculator-data-logger-hack.html
+
+
+
+ClrText
+Locate 1,1,"CONNECTING..."
+Receive(N)
+Lbl 1
+Receive(S)
+S-1000->Z
+Int(Z/10)->A
+Z-A*10->T
+ClrText
+Locate 1,1,"MODEL DOOR LOCK"
+If A=0
+Then Locate 1,3,"LOCKED"
+IfEnd
+If A=1
+Then Locate 1,3,"** UNLOCKED **"
+IfEnd
+If A=2
+Then Locate 1,3,"WRONG CODE"
+IfEnd
+If A=3
+Then Locate 1,3,"LOCKED OUT"
+IfEnd
+Locate 1,5,"Tries left:"
+Locate 13,5,T
+Locate 1,7,"Enter PIN:"
+?->P
+Send(P)
+Goto 1

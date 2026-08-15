@@ -1,2 +1,13 @@
+
+ (C) Michael Fenton, MRSNZ, 2026
+ Licence: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International 
+ (CC BY-NC-SA 4.0)
+
+ 1) Authentic Learning Using Mobile Sensor Technology (2008): https://doi.org/10.5281/zenodo.19302276
+ 2) RIGEL - Learning From Life, Kuala Lumpur (2009): https://doi.org/10.5281/zenodo.19334228
+
+ https://mikefentonnz.github.io/projects/casio-calculator-data-logger-hack.html
+
 8 character limit for file name
 NO ability to create comments or remarks
+NO ability to pause or wait a set time interval
