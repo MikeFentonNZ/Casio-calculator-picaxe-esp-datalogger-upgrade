@@ -43,9 +43,17 @@
  =================================================================
  A SB-62 cross-over cable has male 2.5mm TRS plugs at both ends.
  
- SERIAL FORMAT: 9600 baud, 8N2. The calculator RECEIVES expecting
- 2 stop bits; the PICAXE's bit-banged SEROUT plus its natural
- between-byte processing time satisfies this.
+  THE CALCULATOR ACCEPTS ONE STOP BIT. IT DOES NOT REQUIRE TWO.
+
+  Both settings were tested here and both work. That confirms
+  Grindheim (2001), who reported the link is asymmetric - two stop
+  bits FROM the calculator, one TO it.
+
+  WHY TWO ALSO WORKS: an extra stop bit is only extra idle line. The
+  receiver has already sampled the byte and is waiting for the next
+  start bit, which simply arrives a fraction later.
+ 
+  It is incorrect to say that one stop bit is rejected.
  ===================================================================
  HARDWARE connections(Picaxe 08M2): Wire colours are users choice
 
