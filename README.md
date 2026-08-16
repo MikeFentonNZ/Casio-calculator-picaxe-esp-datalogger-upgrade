@@ -40,7 +40,7 @@ Files are being released in stages.
 * `teaching_resources` - student and teacher guides, experiments, sensor construction.
 * `LICENSE`, `README.md`, `.gitattributes`
 
-**Next release:** ESP8266 and ESP32 firmware, BBC Micro:bit firmware, wiring diagrams, protocol notes, and the experiment manual.
+**Next release:** ESP8266 and BBC Micro:bit firmware, wiring diagrams, protocol notes, and the experiment manual.
 
 ## Features
 
@@ -52,7 +52,7 @@ Files are being released in stages.
 * **One Casio BASIC program serves every microcontroller.** The calculator never learns which device is attached.
 * **Nothing is timestamped in the demonstration code:** The calculator computes elapsed time as interval x (reading number - 1). If the device runs slightly slow no error appears and no reading is dropped; the time axis is simply stretched. On a Picaxe that stretch is about 4.4 to 5.0 % at a 1-second interval and 2.5 to 3.1 % at 2 seconds. The shape of a curve survives this. A rate does not. Timestamps CAN be provided by a suitable microcontroller to permit accurate rate calculations with reasonable precision.
 * **Web-based data sharing:** both ESP builds run their own WiFi access point and serve a live status page and CSV download to phones and laptops **while logging continues, with no reading lost**. Two clients at once has been tested.
-* B**oth ESP boards keep exact time at 1 Hz:** Verified in trials against an external timer.
+* **Both ESP boards keep exact time at 1 Hz:** Verified in trials against an external timer.
 * **Optional wireless link:** on ESP32 hardware an ESP-NOW link has been proven through a house, across 20 metres and into a metal three-bay shed. In open air, 200-plus metres, measured repeatedly.
 * **A DS18B20 temperature sensor costs a Picaxe 750 ms per reading:** The picaxe chip's clock stopped throughout. That is a 16 % time-axis error at a 5-second interval. Use 30 seconds or longer for a rate, or use an ESP board, which does not have this problem.
 * **Interface:** Casio SB-62, 3-pin TTL serial at 9600 baud. The FX-9750GIII port is 3.3 V; older FX-9750G Plus calculators are 5 V TTL.
