@@ -31,7 +31,7 @@ The encoding method is withheld pending peer-reviewed publication.
 
 ## Repository contents
 
-Files are being released in stages.
+Files are being released in stages. Picaxe BASIC and ESP32 C++ available now.
 
 * `casio_calculator_program` — the Casio BASIC datalogger program in `.txt` and `.g1m` form, a key-code utility, and installation notes. 
 * `microcontroller_sensor_programs` - Picaxe, ESP8266, ESP32, and Microbit programs
