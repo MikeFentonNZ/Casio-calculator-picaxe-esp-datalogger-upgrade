@@ -2,7 +2,7 @@
 
 ### A note for teachers, with a security lesson built in
 
-Michael Fenton MRSNZ — March 2026
+Michael Fenton MRSNZ — 12 August 2026
 
 ---
 
@@ -16,8 +16,10 @@ That has a name, and using the right one matters more than it looks.
 
 > **The companion guide is `TEACHER-timing-guide.md`**, which covers the
 > recording use — how accurate the time axis is, which interval to choose, and
-> where each platform runs out. **Its figures are measured on hardware. The ones
-> here are not:** the door-lock build is written and has never been run.
+> where each platform runs out. **The door-lock build was compiled and fully
+> tested on 15 August 2026 and functions as expected.** What has *not* been
+> done is a classroom trial: the lock has been proven on a bench, by its
+> author, not with a class of learners trying to break it.
 
 ---
 
@@ -323,6 +325,34 @@ belief is wrong.*
 
 ---
 
+## An extension: a lock that records WHEN
+
+The lock in this guide knows what happened. It does not know when.
+
+Add an ESP board in place of the PICAXE and it can. Either ESP has WiFi, so at
+startup it can join a router, ask an internet time server for the correct time,
+set its own clock once, and stamp every event after that: **PIN accepted at
+10:42, three wrong attempts at 10:51, lockout, unlocked again at 10:56.**
+
+That turns a demonstration into an **access log**, and an access log is where
+the security lesson in this guide gets its second half. The first half is
+"don't keep the secret in the thing the user is holding". The second is
+"a system that cannot say what happened, or when, cannot be audited" — and
+auditability is most of what separates a real control system from a toy.
+
+**It is not in the released code**, and that is scope rather than
+limitation: what is published is a proof of concept small enough to read end to
+end, not a suite covering every use. The released code needs no modification to
+do what it was built for. The companion guide,
+`TEACHER-timing-guide.md`, sets out the two ways to obtain the clock — one
+internet time check at startup before reverting to access-point mode, or a
+low-cost GPS module that supplies time with no network at all.
+
+**That last one is the good classroom question here.** If the lock cannot
+reach a time server, should it refuse to run, run without timestamps, or invent
+a start time and carry on? Only one of those is defensible, and working out
+which is a better lesson in system design than any amount of wiring.
+
 ## Why this belongs in a data-logging project
 
 Because it is the same protocol, the same cable and the same calculator, doing
@@ -340,7 +370,8 @@ purpose.
 
 ## The build these notes accompany
 
-`Casio-HMI-08M2.bas` — **written 12 August 2026, never run.**
+`Casio-HMI-08M2.bas` — **written 12 August 2026; compiled and fully tested
+15 August 2026, functions as expected.**
 
 - **PICAXE 08M2, the cheapest part in the family.** Two pins for the calculator,
   two for the LEDs, one spare.
@@ -391,14 +422,3 @@ overflows, so the comparison never becomes true **and the door never re-locks**.
 It now stores the *start* and measures elapsed time by unsigned subtraction,
 which wraps correctly. Worth showing a class: the same bug in the lockout timer
 would merely have kept someone waiting, and nobody would have called it serious.
-
-## Disclaimer — use at your own risk
-
-**This material is provided "as is", without warranty of any kind, express or implied**, including but not limited to the warranties of merchantability, fitness for a particular purpose and non-infringement. **You use it entirely at your own risk.**
-
-The author accepts **no responsibility or liability** for any loss, damage, injury or cost arising from the use or misuse of this information, the code, the circuits, or anything built from them — including damage to calculators, microcontrollers, sensors or other equipment.
-
-This project involves **building and wiring electronic circuits**. Responsibility for assessing whether an activity is suitable, for risk assessment, and for supervising learners, rests entirely with the **teacher, parent or other responsible adult**, in accordance with the safety requirements of their school, employer and jurisdiction. 
-
-Nothing here is professional, educational or safety advice. Verify anything you intend to rely on.
-

@@ -534,10 +534,7 @@ main_loop:
   if rxLow <> CASIO_ATTENTION then main_loop ; stale byte - discard
   
   inByte = CASIO_ATTENTION    ; reached only on a real $15, so the
-                              ; test below is now always true. It is
-                              ; kept so this file stays a one-change
-                              ; diff against Casio-MFE-HSO-14M2.bas.
-
+                              ; test below is now always true. 
 
   if inByte = CASIO_ATTENTION then
 

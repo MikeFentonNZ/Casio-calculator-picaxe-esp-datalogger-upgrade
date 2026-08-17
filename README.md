@@ -12,7 +12,7 @@ These calculators cannot carry out automated time-interval data logging on their
 
 The author accepts **no responsibility or liability** for any loss, damage, injury or cost arising from the use or misuse of this information, the code, the circuits, or anything built from them — including damage to calculators, microcontrollers, sensors or other equipment.
 
-This project involves **building and wiring electronic circuits**. Responsibility for assessing whether an activity is suitable, for risk assessment, and for supervising learners, rests entirely with the **teacher, parent or other responsible adult**, in accordance with the safety requirements of their school, employer and jurisdiction. Please read the **[Safety and hardware notes](#safety-and-hardware-notes)** below before building anything.
+This project involves **building and wiring electronic circuits**. Responsibility for assessing whether an activity is suitable, for risk assessment, and for supervising learners, rests entirely with the **teacher, parent or other responsible adult**, in accordance with the safety requirements of their school, employer and jurisdiction. Please read the [**Safety and hardware notes**](#safety-and-hardware-notes) below before building anything.
 
 Nothing here is professional, educational or safety advice. Verify anything you intend to rely on.
 
@@ -32,6 +32,8 @@ The calculator needs no modification or firmware change. It does not need to kno
 
 ## Priority and publication
 
+**→** [**FINDINGS.md**](FINDINGS.md) — what is original here, what the evidence is, what is deliberately withheld, and the prior work this builds on. Start there if you want the short version. It also invites anyone with earlier prior art to say so.
+
 * **Priority disclosure:** Fenton, M. (2026). *Casio Graphing Calculator Serial Interface: Priority Disclosure of Timing Discoveries, Encoding Invention, and Operational Modes (FX-9750 and FX-9860 Series).* Zenodo. https://doi.org/10.5281/zenodo.19303911
 * **2008 classroom research:** Fenton, M. (2008). *Authentic Learning Using Mobile Sensor Technology.* New Zealand Ministry of Education E-Learning Fellowship report. Zenodo. https://doi.org/10.5281/zenodo.19302276
 * **2009 international presentation:** Fenton, M. (2009). *RIGEL — Learning From Life: Communities of Learning via a Connected Curriculum.* Microsoft Partners in Learning Regional Innovative Teachers Conference, Kuala Lumpur, 27–29 May 2009. Zenodo. https://doi.org/10.5281/zenodo.19334228
@@ -41,21 +43,24 @@ The encoding method is withheld pending peer-reviewed publication.
 
 ## Repository contents
 
-Files are being released in stages. Picaxe BASIC and ESP32 C++ available now.
+Files are being released in stages. All Casio BASIC and microcontroller code is available. Some teaching material is yet to be released.
 
-* `casio_calculator_program` — the Casio BASIC datalogger program in `.txt` and `.g1m` form, a key-code utility, and installation notes. 
-* `microcontroller_sensor_programs` - Picaxe, ESP8266, ESP32, and Microbit programs
-* `images_video` — Casio serial protocol diagrams, assembly, and use.
-* `original_2007-2010-classroom-research` — the 2008 education research report, conference presentations, sensor builds,and analysis of classroom use.
-* `teaching_resources` - student and teacher guides, experiments, sensor construction.
+* `casio\_calculator\_program` — the Casio BASIC datalogger program in `.txt` and `.g1m` form, a key-code utility, and installation notes.
+* `microcontroller\_sensor\_programs` - Picaxe, ESP8266, ESP32, micro:bit and Arduino programs
+* `original\_2007-2010\_classroom\_research` — the 2008 education research report, conference presentations, sensor builds,and analysis of classroom use.
+* `photos\_video` — Casio serial protocol diagrams, assembly, and use.
+* `original\_2007-2010-classroom-research` — the 2008 education research report, conference presentations, sensor builds,and analysis of classroom use.
+* `serial\_protocol\_wiring\_diagrams` — serial protocol full description and universal SB-62 cable wiring diagram for all microcontroller platforms.
+* `teaching\_resources` - student and teacher guides, experiments, sensor construction.
 * `LICENSE`, `README.md`, `.gitattributes`
 
-**Next release:** ESP8266 and BBC Micro:bit firmware, wiring diagrams, protocol notes, and the experiment manual.
+**Next release:** An updated teacher/student manual, and the experiment manual.
 
 ## Features
 
 * **Compatible calculators:** Casio FX-9750 and FX-9860 series. All figures below were measured on an FX-9750GIII. Casio issues one firmware image for the FX-9750GIII and FX-9860GIII, so the protocol behaves the same on both.
-* **Microcontrollers:** Picaxe 08M2 and 14M2, ESP8266 (Wemos D1 mini), ESP32, BBC micro:bit V1 and V2.
+* **Microcontrollers:** Picaxe 08M2, 14M2, 18X; ESP8266 (Wemos D1 mini); ESP3; BBC Micro:bit V1 and V2; Arduino Uno R3.
+* \*\*Arduino Uno R3:  **Two components are mandatory on this board:** the 4.7 kΩ pull-up must go to **+5 V** (it lifts the calculator's 2.75 V mark above the Uno's 3.0 V threshold — bare, an Uno cannot read a GIII), and the **1N4148 diode must be fitted** (it keeps the Uno's 5 V output off a 3.3 V input that is not 5 V tolerant).
 * **Sampling interval:** 300 seconds is a chosen working limit with margin, not a ceiling. A pause of three hours has been held, and no pause has ever failed for being too long. Battery voltage is the limiting factor. The Casio auto-power-off (APO) is disabled.
 * **999 readings per session:** The calculator's list capacity, confirmed on hardware. MORE readings can be made if readings are spread across lists. Casio data storage capacity is the limiting factor.
 * **Non-volitile memory:** The calculator's logged data is retained in the event of a power loss.
@@ -80,24 +85,24 @@ Files are being released in stages. Picaxe BASIC and ESP32 C++ available now.
 ## Safety and hardware notes
 
 * **NEVER connect mains electricity (240 V / 110 V)** to the calculator, the microcontroller, or any sensor wiring. **NEVER use mains-connected equipment near water.**
-* **Keep every sensor signal within 0 V to 3.3 V.** The ESP32 and ESP8266 are not 5 V tolerant. A bare ESP8266 A0 pin reads 0 to 1.0 V only; 3.3 V will destroy it. However, popular development boards like NodeMCU and Wemos D1 Mini include an onboard resistor voltage divider, which safely extends their external board tolerance to 0 to 3.2V–3.3V
+* **Keep every sensor signal within the board's own supply range** - 0 V to 3.3 V on the ESP and micro:bit boards, 0 V to 5 V on an Arduino Uno or a Picaxe run from 5 V. The ESP32 and ESP8266 are not 5 V tolerant. A bare ESP8266 A0 pin reads 0 to 1.0 V only; 3.3 V will destroy it. However, popular development boards like NodeMCU and Wemos D1 Mini include an onboard resistor voltage divider, which safely extends their external board tolerance to 0 to 3.2V–3.3V
 * **Do not connect 5 V logic** to the Casio port unless a bidirectional level converter is used.
 * **When breadboarding with a 4-pin USB serial cable, remove the red V+ wire** and power the microcontroller from its own cells.
 * **Never use boiling water for temperature calibration** — it is not needed — and never work near live electrical outlets.
 
 ## Quick start for teachers
 
-1. **Gather parts:** Casio SB-62 cable or breakout; Picaxe, ESP32 or Wemos; battery pack; one sensor; jumper wires; the 4.7 kΩ resistor and 1N4148 diode
-2. **Install the calculator program** from `/casio_calculator_program`.
+1. **Gather parts:** Casio SB-62 cable or breakout; Picaxe, ESP32, Wemos, micro:bit or Arduino Uno; battery pack; one sensor; jumper wires; the 4.7 kΩ resistor and 1N4148 diode
+2. **Install the calculator program** from `/casio\_calculator\_program`.
 3. **Wire and test**:
 
    * A calculator: FX-9750 or FX-9860 series. Casio issues one firmware image for the FX-9750GIII and FX-9860GIII, so the protocol behaves the same on both.
-   * A microcontroller: Picaxe 08M2 or 14M2 - cheapest, one chip, no board. Alternatively use a ESP8266 or ESP32 development board, which cost more but adds WiFi capability and timestamping. Arduino or BBC micro:bit V2 are also suitable.
+   * A microcontroller: Picaxe 08M2 or 14M2 - cheapest, one chip, no board. An ESP8266 or ESP32 development board costs more but adds WiFi and timestamping. A BBC micro:bit needs no sensors at all to get started, because two of its three channels are inside the board. An **Arduino Uno R3** works too but all three of its channels need a wired sensor.
    * A cable: a Casio SB-62, or two 2.5 mm 3-pin plugs and some wire.
    * Resistor: a 4.7 k pull-up from the calculator's transmit line to +3.3 V. When the calculator's port is not in use it goes high impedance and the line floats to 0 V. Serial lines idle **high**, so a microcontroller already listening reads that as a permanent break and logs junk until the calculator wakes its port. The pull-up supplies the idle state the calculator does not.
    * 1N4148 diode: in series on the calculator's receive line, **bar (cathode) toward the microcontroller**. Reversed, nothing works. The diode makes the output open-drain — the microcontroller only ever pulls the line low, and the calculator raises it with its own internal pull-up. That is why **no series resistor is fitted alongside it**, and why the same wiring suits a 3.3 V calculator and a 5 V one. A 1N914 is equivalent; a Schottky is not needed.
    * A sensor: a thermistor or an LDR makes a good first one. Both read in about a millisecond.
-4. **Install the microcontroller program**; suggested using the Picaxe for first-use simplicity. 
+4. **Install the microcontroller program**; suggested using the Picaxe for first-use simplicity.
 5. **Run a lesson:** Turn on the microcontroller, launch the data logger program on the calculator, collect samples, graph the data, and use the calculator's own analysis tools for regression and interpretation.
 
 ## Classroom lesson ideas

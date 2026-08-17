@@ -202,6 +202,66 @@ precision the time axis carries.
 
 ---
 
+## Adding a true clock time — a small extension, two ways
+
+**Nothing below is a deficiency in the released code.** What is published does
+exactly what it was built to do: demonstrate, in the simplest form that can be
+read end to end, that a graphing calculator can log timed sensor data. It is a
+proof of concept, not a suite of programs covering every way a class might want
+to use a logger. It needs no modification to be complete.
+
+What follows is an **extension**, for a teacher or student who wants it.
+
+### Why a real clock time is worth having
+
+Everything else in this guide is about **elapsed** time — the calculator works
+out when a reading happened as `interval × (reading number − 1)`. For most
+investigations that is the right measure, because the question is how something
+changed across the run.
+
+It stops being enough the moment you want to **join your data to somebody
+else's.** Elapsed time only means anything inside one run. A true clock time
+lets a class line their cooling curve up against the school weather station,
+compare two groups who logged at different times of day, or match a run to a
+tide table. That is a different kind of investigation.
+
+### Method 1 — the ESP boards, from the internet, once
+
+Either ESP board has WiFi. At startup it joins the school network, asks an
+internet time server for the correct time, **sets its own clock once**, and
+then switches back to being its own access point for serving the web page. The
+ordinary NSN logger runs from there exactly as it does now, with the user
+setting the interval as usual.
+
+The true time is recorded **in its own List**, alongside — not instead of — the
+elapsed time from zero. The class then has both: elapsed time for the shape of
+the curve, wall-clock time for joining the data to anything else.
+
+The network name and password go in the sketch. In a school that is normally
+straightforward, since the students already have credentials for the same
+network.
+
+### Method 2 — a GPS module, which needs no network at all
+
+A low-cost GPS module on an ESP gives **time and position from the same
+device**, with no WiFi involved. This is proven, and not difficult: the author
+runs a u-blox NEO-8M on an ESP32 in a companion robot project, using the
+standard `TinyGPS++` library on a spare hardware serial port.
+
+For anything outdoors this is the better answer, and it makes the network
+question disappear entirely. A field logger has no router to reach — but it
+does have a clear view of the sky.
+
+### The one design question worth putting to students
+
+Whichever method, decide **what the logger should do when it cannot get the
+time** — no network in range, or no satellite fix yet.
+
+The honest answer is to log anyway and mark the run as having no true start
+time. Inventing a plausible time and carrying on would be a fault dressed as a
+result, which this project refuses everywhere else. Working out why that
+matters is a better lesson in instrument design than the wiring is.
+
 ## A worked example for students
 
 > A class records cooling water every 2 seconds for 500 readings on a

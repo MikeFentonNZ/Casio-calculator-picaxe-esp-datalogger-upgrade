@@ -348,10 +348,21 @@ const uint8_t CMD_RECEIVE     = 'R';    // ":REQ..." calculator wants a value
 const uint8_t CMD_SEND        = 'V';    // ":VAL..." calculator is sending one
 
 const uint8_t VNAME_N         = 'N';    // how many sensors?
-const uint8_t VNAME_A         = 'A';    // the sensor reading
+const uint8_t VNAME_A         = 'A';    // sensor 1
+const uint8_t VNAME_B         = 'B';    // sensor 2
+const uint8_t VNAME_C         = 'C';    // sensor 3
 const uint8_t VNAME_T         = 'T';    // sampling interval, via Send(
 
-const uint8_t  SENSOR_COUNT = 1;        // fixed at 1 in this DEMONSTRATION
+// Byte 14 of the value packet, the sign/info byte.
+//   bit 0        the magnitude is >= 1
+//   bits 6 and 4 the value is NEGATIVE
+const uint8_t SIGN_POSITIVE   = 0x01;
+const uint8_t SIGN_NEGATIVE   = 0x51;
+
+// The largest magnitude the value packet carries in the form used here.
+constexpr int16_t NSN_MAX_VALUE = 9999;
+
+const uint8_t  SENSOR_COUNT = 3;        // A, B and C - the released NSN-LOGR asks for all three
 
 // ===================================================================
 // DS18B20 RESOLUTION  -  and why the default is the LOWEST one
@@ -522,7 +533,7 @@ struct LinkStats {
   uint32_t flushed;        // bytes cleared after something unexpected
   uint32_t csvDownloads;   // CSV files served to a GET
   uint32_t csvOtherReq;    // HEAD and anything else asking for it
-  uint8_t  lastFlag;       // most recent application flag
+  uint8_t  lastSat;        // most recent saturation mask
   uint8_t  saturatedNow;   // current saturation mask
   uint8_t  lastBadByte;    // WHAT arrived - the whole question
   uint8_t  lastBadStage;   // 1 = ACK1, 2 = ACK2, 3 = attention
@@ -618,7 +629,8 @@ static void note_turnaround() {
 
 struct Sample {
   uint32_t t;        // seconds since boot
-  int16_t  v[3];     // PHYSICAL values - ONLY 1 USED IN THIS DEMONSTRATION
+  int16_t  v[3];     // PHYSICAL values, signed, as the sensors read them
+  uint8_t  sat;      // saturation mask: bit 0,1,2 set if that channel clamped
 };
 
 Sample   history[HISTORY_SIZE];
@@ -658,7 +670,9 @@ bool     firstReading = true;  // the very first reading happens at once
 
 int16_t  physicalValue[3];     // the sensor value
 uint8_t  saturatedMask = 0;    // bit 0,1,2 set if that channel was clamped
-uint8_t  applicationFlag = 0;  // status code sent with the reading
+// NSN has NO status field in the value packet, so a clamp cannot be
+// reported to the calculator in-band. It is reported on the WEB PAGE
+// and in the CSV instead - see handle_status_page() and Sample.sat.
 
 // Forward declarations. The Arduino IDE generates these for you, but
 // stating them plainly means this file also compiles as ordinary C++
@@ -676,7 +690,8 @@ void     note_sample_request();
 void     handle_status_page();
 void     handle_csv_download();
 void     start_slow_conversions();
-void     send_nsn_value(uint16_t value);
+void     send_nsn_value(int16_t signedValue);
+int16_t  clamp_to_range(int32_t value, uint8_t channel);
 void     send_description(uint8_t vname);
 void     send_end_packet();
 uint16_t denormalise_value(uint8_t intDigit, uint8_t dec1, uint8_t dec2,
@@ -772,14 +787,28 @@ void start_slow_conversions() {
   ds18b20.requestTemperatures();      // non-blocking; see setup()
 }
 
+// KEEP THE VALUE INSIDE WHAT THE PACKET CAN CARRY
+//
+// A reading beyond range is clamped AND the clamp is recorded, so the
+// web page and the CSV can report it. A silent clamp is a lie the
+// size of the error.
+int16_t clamp_to_range(int32_t value, uint8_t channel) {
+  if (value >  NSN_MAX_VALUE) { saturatedMask |= (1 << channel); return  NSN_MAX_VALUE; }
+  if (value < -NSN_MAX_VALUE) { saturatedMask |= (1 << channel); return -NSN_MAX_VALUE; }
+  return (int16_t)value;
+}
+
 void read_all_sensors() {
   saturatedMask = 0;
 
-  physicalValue[0] = physicalValue[0] + 7; //DEMONSTRATION
-  if  (physicalValue[0] > 1020) {
-   physicalValue[0] = 0;
-  }
+  // All three are read together, one after another with no waiting in
+  // between, so the three values a sample carries belong to the same
+  // instant even though they travel in three separate transactions.
+  physicalValue[0] = clamp_to_range(scale_to_physical_1(), 0);
+  physicalValue[1] = clamp_to_range(scale_to_physical_2(), 1);
+  physicalValue[2] = clamp_to_range(scale_to_physical_3(), 2);
 
+  stats.lastSat = saturatedMask;
   history_add();
 }
 
@@ -815,6 +844,7 @@ void history_add() {
   s.v[0] = physicalValue[0];
   s.v[1] = physicalValue[1];
   s.v[2] = physicalValue[2];
+  s.sat  = saturatedMask;
 
   historyHead = (historyHead + 1) % HISTORY_SIZE;
   if (historyCount < HISTORY_SIZE) historyCount++;
@@ -1173,7 +1203,7 @@ void handle_csv_download() {
                     F("attachment; filename=\"" AP_SSID ".csv\""));
   server.send(200, F("text/csv"), F(""));
 
-  server.sendContent(F("time_s," CH1_CSV "," CH2_CSV "," CH3_CSV ",flag\r\n"));
+  server.sendContent(F("time_s," CH1_CSV "," CH2_CSV "," CH3_CSV ",clamped\r\n"));
 
   // Rows are batched into a fixed buffer and flushed. One
   // sendContent() per row would work and would spend more time in
@@ -1198,7 +1228,7 @@ void handle_csv_download() {
 
     int n = snprintf(buf + used, sizeof(buf) - used,
                      "%lu,%s,%s,%s,%02u\r\n",
-                     (unsigned long)s.t, v1, v2, v3);
+                     (unsigned long)s.t, v1, v2, v3, (unsigned)s.sat);
     if (n <= 0) break;
     used += (size_t)n;
   }
@@ -1266,7 +1296,10 @@ uint8_t calculate_checksum(const uint8_t *packet) {
 // meet in Year 9-10 maths: I.DDDD x 10^E. Only the sensor count and
 // the occasional zero travel this way.
 // ===================================================================
-void send_nsn_value(uint16_t value) {
+void send_nsn_value(int16_t signedValue) {
+  bool     negative = (signedValue < 0);
+  uint16_t value    = (uint16_t)(negative ? -(int32_t)signedValue : signedValue);
+
   if (value == 0) {
     // Zero has its own packet, with a fixed checksum of 0xFE.
     const uint8_t zeroPacket[16] = {
@@ -1310,11 +1343,12 @@ void send_nsn_value(uint16_t value) {
   packet[6] = dec1;
   packet[7] = dec2;
   for (uint8_t i = 8; i < 13; i++) packet[i] = 0x00;
-  packet[13] = 0x01;             // positive, magnitude >= 1
+  packet[13] = negative ? SIGN_NEGATIVE : SIGN_POSITIVE;
   packet[14] = exponent;
   packet[15] = calculate_checksum(packet);
 
   CasioSerial.write(packet, 16);
+  stats.valuePackets++;
 }
 
 // ===================================================================
@@ -1549,13 +1583,23 @@ void handle_receive(uint8_t vname) {
   // that every reference says should happen. That patience is what
   // turns a calculator into a datalogger.
 
+  // *** THE INTERVAL WAIT BELONGS TO CHANNEL A ONLY. ***
+  // A, B and C are three transactions within ONE sample. Waiting in B
+  // or C as well would multiply the interval by the number of sensors
+  // and stretch the time axis silently. All three sensors are read
+  // together inside wait_for_interval(), so B and C return values
+  // taken at the same instant as A.
   if (vname == VNAME_N) {
-    send_nsn_value(SENSOR_COUNT);
+    send_nsn_value((int16_t)SENSOR_COUNT);
   } else if (vname == VNAME_A) {
     note_sample_request();
     wait_for_interval();          // <-- the long pause lives in here
-    send_nsn_value(physicalValue[0]); // DEMONSTRATION - see Read_All_Sensors
+    send_nsn_value(physicalValue[0]);
     sessionSamples++;
+  } else if (vname == VNAME_B) {
+    send_nsn_value(physicalValue[1]);
+  } else if (vname == VNAME_C) {
+    send_nsn_value(physicalValue[2]);
   } else {
     send_nsn_value(0);          // unknown variable: zero
   }

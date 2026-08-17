@@ -1,0 +1,86 @@
+cff-version: 1.2.0
+title: >-
+  Casio calculator data logger: timed sensor sampling using
+  host-wait windows in the Casio serial protocol
+message: >-
+  If you use this work, please cite the priority disclosure
+  listed under preferred-citation.
+type: software
+authors:
+  - family-names: Fenton
+    given-names: Michael
+    name-suffix: MRSNZ
+    orcid: "https://orcid.org/0009-0008-7153-0873"
+    city: New Plymouth
+    country: NZ
+    website: "https://mikefentonnz.github.io"
+repository-code: >-
+  https://github.com/MikeFentonNZ/Casio-calculator-datalogger-picaxe-esp-microbit-arduino
+url: "https://mikefentonnz.github.io"
+abstract: >-
+  Timed sensor data logging on Casio FX-9750 and FX-9860 series
+  graphing calculators, using undocumented host-wait windows in the
+  Casio serial RECEIVE() protocol. A microcontroller holds the
+  calculator inside one of those windows while it counts out a
+  sampling interval, so the device keeps time and the calculator
+  simply receives. No EA-200, no CLAB and no E-CON application are
+  required. Supports PICAXE, ESP8266, ESP32 and BBC micro:bit, with
+  one calculator program serving every platform.
+keywords:
+  - Casio FX-9750GIII
+  - Casio FX-9860GIII
+  - graphing calculator
+  - data logger
+  - host-wait window
+  - READY-gated timing tolerance
+  - Casio serial protocol
+  - SB-62
+  - CAS50
+  - PICAXE
+  - ESP8266
+  - ESP32
+  - BBC micro:bit
+  - Arduino Uno
+  - normalised scientific notation
+  - open-drain
+  - STEM education
+  - industrial measurement and control
+  - low-cost instrumentation
+license: CC-BY-NC-SA-4.0
+preferred-citation:
+  type: report
+  title: >-
+    Casio Graphing Calculator Serial Interface: Priority Disclosure of
+    Timing Discoveries, Encoding Invention, and Operational Modes
+    (FX-9750 and FX-9860 Series)
+  authors:
+    - family-names: Fenton
+      given-names: Michael
+      name-suffix: MRSNZ
+      orcid: "https://orcid.org/0009-0008-7153-0873"
+  year: 2026
+  doi: 10.5281/zenodo.19303911
+  url: "https://doi.org/10.5281/zenodo.19303911"
+references:
+  - type: report
+    title: Authentic Learning Using Mobile Sensor Technology
+    authors:
+      - family-names: Fenton
+        given-names: Michael
+    year: 2008
+    institution:
+      name: New Zealand Ministry of Education E-Learning Fellowship
+    doi: 10.5281/zenodo.19302276
+  - type: conference-paper
+    title: >-
+      RIGEL - Learning From Life: Communities of Learning via a
+      Connected Curriculum
+    authors:
+      - family-names: Fenton
+        given-names: Michael
+    year: 2009
+    conference:
+      name: >-
+        Microsoft Partners in Learning Regional Innovative Teachers
+        Conference, Kuala Lumpur
+    doi: 10.5281/zenodo.19334228
