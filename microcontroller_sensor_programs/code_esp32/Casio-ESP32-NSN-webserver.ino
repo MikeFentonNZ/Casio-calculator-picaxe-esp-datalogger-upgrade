@@ -137,7 +137,7 @@
   - GPIO 16 (RX) <- from Casio TX  [TIP of 2.5mm TRS, YELLOW wire]
   - GPIO 16      -> 4.7k pull-up resistor to 3.3 V  *** REQUIRED ***
   - GPIO 17 (TX) -> to Casio RX  [RING of 2.5mm TRS, BLUE wire]
-                    via 1N4148 diode, BAR (cathode) towards the ESP32
+                    via via 1N4148 diode, bar towards ESP32
   - GND          -> Casio GND    [SLEEVE of 2.5mm TRS, BLACK wire]
 
   - GPIO 4       -> DS18B20 data, with 4.7k pull-up to 3.3 V
@@ -154,7 +154,7 @@
 // PIN ASSIGNMENTS
 // ===================================================================
 #define CASIO_RX_PIN   16     // from Casio TX  (yellow, tip)
-#define CASIO_TX_PIN   17     // to   Casio RX  (blue, ring) via 1N4148, BAR to ESP32
+#define CASIO_TX_PIN   17     // to   Casio RX  (blue, ring) via 1N4148, BAR to board
 #define ONEWIRE_PIN     4     // DS18B20 data line  (sensor 1)
 #define SENSOR2_PIN    35     // analogue, ADC1_CH7
 #define SENSOR3_PIN    36     // analogue, ADC1_CH0
@@ -472,7 +472,7 @@ DallasTemperature ds18b20(&oneWire);
 // at 94 ms and this board is committed for under 300 ms of the 1000.
 //
 // SO THE DEVICE IS NOT WHAT DECIDES THIS. The calculator is - its
-// BASIC program has to decode the mantissa, write four lists and
+// BASIC program has to take the value in, write it to a list and
 // refresh the display between one request and the next, and that has
 // never been timed.
 //
@@ -539,9 +539,9 @@ LinkStats stats = {};
 // ===================================================================
 // Added 7 August 2026. This measures something no part of this
 // project could measure before: THE CASIO'S OWN LOOP TIME. Not the
-// link, not this board - the calculator finishing Receive(, decoding
-// the mantissa by progressive extraction, writing four list elements,
-// refreshing the display, and coming back to ask again.
+// link, not this board - the calculator finishing Receive(, storing
+// the value it received, writing a list element, refreshing the
+// display, and coming back to ask again.
 //
 // HOW. The board notes the millisecond it finished a transaction and
 // the millisecond the next attention byte arrives. The gap between
@@ -592,11 +592,11 @@ static void note_turnaround() {
 // the same measurements on a phone they already carry. It also means
 // somebody who joins ten minutes late still sees the whole run.
 //
-// IT STORES physicalValue, NOT encodedField. Real units, signed, with
-// the offset already removed. The +5000 rule then lives in exactly
-// one function - apply_offset() - instead of being repeated wherever
-// data is displayed. The offset is a transport detail and has no
-// business appearing on a screen.
+// IT STORES physicalValue - real units, signed, as the sensors read
+// them, with any transport conditioning already undone. That
+// conditioning lives in exactly one function instead of being
+// repeated wherever data is displayed. It is a transport detail and
+// has no business appearing on a screen.
 //
 // SIZING. A Sample is 4 + 6 + 1 bytes, which the compiler pads to
 // 12. 999 samples costs 11,988 bytes, against about 46,600 free with
@@ -658,7 +658,7 @@ bool     firstReading = true;  // the very first reading happens at once
 
 int16_t  physicalValue[3];     // the sensor value
 uint8_t  saturatedMask = 0;    // bit 0,1,2 set if that channel was clamped
-uint8_t  applicationFlag = 0;  // digits D13-D14
+uint8_t  applicationFlag = 0;  // status code sent with the reading
 
 // Forward declarations. The Arduino IDE generates these for you, but
 // stating them plainly means this file also compiles as ordinary C++
