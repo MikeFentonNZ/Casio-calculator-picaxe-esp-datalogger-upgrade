@@ -6,6 +6,16 @@ Updated from Michael Fenton's original work with the Casio FX-9750 in the mid 20
 
 These calculators cannot carry out automated time-interval data logging on their own. This project addresses that, enabling a low-cost smart data logger that also acts as a remote control and automation control interface. It enables authentic STEM investigations at school, at home, across subject areas and at all year levels. It supports out-of-field and novice STEM teachers by revealing a tool students already own permits student-led learning. Students become the expert tool builders and users, while teachers guide activities tied to curriculum goals.
 
+## Disclaimer — use at your own risk
+
+**This material is provided "as is", without warranty of any kind, express or implied**, including but not limited to the warranties of merchantability, fitness for a particular purpose and non-infringement. **You use it entirely at your own risk.**
+
+The author accepts **no responsibility or liability** for any loss, damage, injury or cost arising from the use or misuse of this information, the code, the circuits, or anything built from them — including damage to calculators, microcontrollers, sensors or other equipment.
+
+This project involves **building and wiring electronic circuits**. Responsibility for assessing whether an activity is suitable, for risk assessment, and for supervising learners, rests entirely with the **teacher, parent or other responsible adult**, in accordance with the safety requirements of their school, employer and jurisdiction. Please read the **[Safety and hardware notes](#safety-and-hardware-notes)** below before building anything.
+
+Nothing here is professional, educational or safety advice. Verify anything you intend to rely on.
+
 ## How it works
 
 The Casio serial protocol has positions in its `RECEIVE()` exchange where the calculator waits for the attached device **without any deadline** — it raises no COM ERROR however long the wait. Four such positions were found by inserting a pause at every point in the device-side flow, line by line, and recording the result. Two of them are useful.
@@ -78,14 +88,14 @@ Files are being released in stages. Picaxe BASIC and ESP32 C++ available now.
 ## Quick start for teachers
 
 1. **Gather parts:** Casio SB-62 cable or breakout; Picaxe, ESP32 or Wemos; battery pack; one sensor; jumper wires; the 4.7 kΩ resistor and 1N4148 diode
-2. **Install the calculator program** from `/casio\\\_calclculator\\\_program`.
+2. **Install the calculator program** from `/casio_calculator_program`.
 3. **Wire and test**:
 
    * A calculator: FX-9750 or FX-9860 series. Casio issues one firmware image for the FX-9750GIII and FX-9860GIII, so the protocol behaves the same on both.
    * A microcontroller: Picaxe 08M2 or 14M2 - cheapest, one chip, no board. Alternatively use a ESP8266 or ESP32 development board, which cost more but adds WiFi capability and timestamping. Arduino or BBC micro:bit V2 are also suitable.
    * A cable: a Casio SB-62, or two 2.5 mm 3-pin plugs and some wire.
-   * Resistor: a 4.7 k pull-up from the calculator's transmit line to +3.3 V
-   * 1N4148 diode: in series on the calculators receive line./li>
+   * Resistor: a 4.7 k pull-up from the calculator's transmit line to +3.3 V. When the calculator's port is not in use it goes high impedance and the line floats to 0 V. Serial lines idle **high**, so a microcontroller already listening reads that as a permanent break and logs junk until the calculator wakes its port. The pull-up supplies the idle state the calculator does not.
+   * 1N4148 diode: in series on the calculator's receive line, **bar (cathode) toward the microcontroller**. Reversed, nothing works. The diode makes the output open-drain — the microcontroller only ever pulls the line low, and the calculator raises it with its own internal pull-up. That is why **no series resistor is fitted alongside it**, and why the same wiring suits a 3.3 V calculator and a 5 V one. A 1N914 is equivalent; a Schottky is not needed.
    * A sensor: a thermistor or an LDR makes a good first one. Both read in about a millisecond.
 4. **Install the microcontroller program**; suggested using the Picaxe for first-use simplicity. 
 5. **Run a lesson:** Turn on the microcontroller, launch the data logger program on the calculator, collect samples, graph the data, and use the calculator's own analysis tools for regression and interpretation.

@@ -67,6 +67,22 @@
  - Pin C.3    unused
  - 0V      -> Casio GND [sleeve of 2.5mm TRS jack, BLACK wire]
 
+ *** WHY A DIODE HERE AND NOT A SERIES RESISTOR ***
+ The diode makes this an OPEN-DRAIN output: the PICAXE can only ever PULL
+ THE LINE LOW. When it drives high the diode blocks, and the calculator
+ raises the line with its own internal pull-up.  
+
+  - The PICAXE supply no longer sets the calculator's high level, so the
+    same wiring serves a 3.3 V FX-9750GIII and a 5 V FX-9750G Plus.
+  - No contention is possible, so no series resistor is wanted. Do NOT fit
+    a 1k as well - it shares the current path and pushes the LOW level back
+    up, which is what breaks the link.
+  - BAR (cathode) TOWARD THE PICAXE. Reversed, nothing works.
+
+ 1N4148 or 1N914. A Schottky is not required: the low sits near 0.6 V
+ against a threshold near 0.82 V, and the drop falls as current falls.
+ Verified on PICAXE, ESP8266, ESP32 and micro:bit V1/V2, 2026.
+
 ==============================================
   THE CALCULATOR IS THE WHOLE INTERFACE
  -----------------------------------------------------------------

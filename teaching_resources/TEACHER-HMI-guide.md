@@ -391,3 +391,14 @@ overflows, so the comparison never becomes true **and the door never re-locks**.
 It now stores the *start* and measures elapsed time by unsigned subtraction,
 which wraps correctly. Worth showing a class: the same bug in the lockout timer
 would merely have kept someone waiting, and nobody would have called it serious.
+
+## Disclaimer — use at your own risk
+
+**This material is provided "as is", without warranty of any kind, express or implied**, including but not limited to the warranties of merchantability, fitness for a particular purpose and non-infringement. **You use it entirely at your own risk.**
+
+The author accepts **no responsibility or liability** for any loss, damage, injury or cost arising from the use or misuse of this information, the code, the circuits, or anything built from them — including damage to calculators, microcontrollers, sensors or other equipment.
+
+This project involves **building and wiring electronic circuits**. Responsibility for assessing whether an activity is suitable, for risk assessment, and for supervising learners, rests entirely with the **teacher, parent or other responsible adult**, in accordance with the safety requirements of their school, employer and jurisdiction. 
+
+Nothing here is professional, educational or safety advice. Verify anything you intend to rely on.
+

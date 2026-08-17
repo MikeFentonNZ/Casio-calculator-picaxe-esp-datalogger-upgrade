@@ -137,7 +137,7 @@
   - GPIO 16 (RX) <- from Casio TX  [TIP of 2.5mm TRS, YELLOW wire]
   - GPIO 16      -> 4.7k pull-up resistor to 3.3 V  *** REQUIRED ***
   - GPIO 17 (TX) -> to Casio RX  [RING of 2.5mm TRS, BLUE wire]
-                    via via 1N4148 diode, bar towards ESP32
+                    via 1N4148 diode, BAR (cathode) towards the ESP32
   - GND          -> Casio GND    [SLEEVE of 2.5mm TRS, BLACK wire]
 
   - GPIO 4       -> DS18B20 data, with 4.7k pull-up to 3.3 V
@@ -154,7 +154,7 @@
 // PIN ASSIGNMENTS
 // ===================================================================
 #define CASIO_RX_PIN   16     // from Casio TX  (yellow, tip)
-#define CASIO_TX_PIN   17     // to   Casio RX  (blue, ring) via 1k
+#define CASIO_TX_PIN   17     // to   Casio RX  (blue, ring) via 1N4148, BAR to ESP32
 #define ONEWIRE_PIN     4     // DS18B20 data line  (sensor 1)
 #define SENSOR2_PIN    35     // analogue, ADC1_CH7
 #define SENSOR3_PIN    36     // analogue, ADC1_CH0
