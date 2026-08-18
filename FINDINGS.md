@@ -53,7 +53,9 @@ That turns a graphing calculator into a datalogger with no specialised hardware 
 |BBC micro:bit V1, V2|validated|validated|
 |Arduino Uno R3 (5 V)|**validated**|validated|
 
-Tested against FX-9750 and FX-9860 series calculators including both the legacy G Plus and the current GIII.
+Every build published here was compiled and run to a full interval logging session against an **FX-9750GIII** in August 2026. The earlier 2007–2008 work ran on an **FX-9750G Plus**, which is where the two-generation claim comes from.
+
+*Not tested on the FX-9860 series or the FX-CG50.* The FX-9750GIII and FX-9860GIII share one Casio firmware image, so the 9860GIII is expected to behave identically — but expected is not tested, and it is not claimed here.
 
 **Two platform notes worth knowing before you choose a board.** A BBC micro:bit needs **no sensors at all** to start — two of its three channels are inside the board — so a first lesson runs with a cable and nothing else. An Arduino Uno is at the other end: all three channels need a wire, but it is the board most likely to already be in a school cupboard.
 
@@ -139,7 +141,7 @@ That combination — **automatic sensor acquisition, device-maintained elapsed t
 
 |component|status|
 |-|-|
-|device-maintained elapsed time and sensor acquisition|validated on five platforms|
+|device-maintained elapsed time and sensor acquisition|validated on six platforms|
 |category entry from the calculator keypad via `Send(`|proven — 2008 robot control, and the 2026 door lock|
 |**position and true clock time from GPS**|proven on ESP32 in a companion project of the author's — a u-blox NEO-8M on a spare hardware serial port, using the standard `TinyGPS++` library. Straightforward, not speculative.|
 |**the whole combined into a survey logger**|**described and claimed; not yet built as a Casio application**|

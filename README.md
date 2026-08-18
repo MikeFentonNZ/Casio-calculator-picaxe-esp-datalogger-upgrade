@@ -43,23 +43,23 @@ The encoding method is withheld pending peer-reviewed publication.
 
 ## Repository contents
 
-Files are being released in stages. All Casio BASIC and microcontroller code is available. Some teaching material is yet to be released.
+Files are being released in stages. All Casio BASIC and microcontroller code is available. Student / teacher material is now available.
 
-* `casio\_calculator\_program` — the Casio BASIC datalogger program in `.txt` and `.g1m` form, a key-code utility, and installation notes.
-* `microcontroller\_sensor\_programs` - Picaxe, ESP8266, ESP32, micro:bit and Arduino programs
-* `original\_2007-2010\_classroom\_research` — the 2008 education research report, conference presentations, sensor builds,and analysis of classroom use.
-* `photos\_video` — Casio serial protocol diagrams, assembly, and use.
-* `original\_2007-2010-classroom-research` — the 2008 education research report, conference presentations, sensor builds,and analysis of classroom use.
-* `serial\_protocol\_wiring\_diagrams` — serial protocol full description and universal SB-62 cable wiring diagram for all microcontroller platforms.
-* `teaching\_resources` - student and teacher guides, experiments, sensor construction.
+* `casio\\\_calculator\\\_program` — the Casio BASIC datalogger program in `.txt` and `.g1m` form, a key-code utility, and installation notes.
+* `microcontroller\\\_sensor\\\_programs` - Picaxe, ESP8266, ESP32, micro:bit and Arduino programs
+* `original\\\_2007-2010\\\_classroom\\\_research` — the 2008 education research report, conference presentations, sensor builds,and analysis of classroom use.
+* `photos\\\_video` — Casio serial protocol diagrams, assembly, and use.
+* `original\\\_2007-2010-classroom-research` — the 2008 education research report, conference presentations, sensor builds,and analysis of classroom use.
+* `serial\\\_protocol\\\_technical\\\_manual` — serial protocol full description, packet formation, and universal SB-62 cable wiring diagram for all microcontroller platforms.
+* `teaching\\\_resources` - student and teacher guide, protocol and packet structure, crossover cable wiring diagrams, experiments, sensor unit construction, safety reminders.
 * `LICENSE`, `README.md`, `.gitattributes`
 
-**Next release:** An updated teacher/student manual, and the experiment manual.
+**Next release:** An updated teacher/student manual.
 
 ## Features
 
 * **Compatible calculators:** Casio FX-9750 and FX-9860 series. All figures below were measured on an FX-9750GIII. Casio issues one firmware image for the FX-9750GIII and FX-9860GIII, so the protocol behaves the same on both.
-* **Microcontrollers:** Picaxe 08M2, 14M2, 18X; ESP8266 (Wemos D1 mini); ESP3; BBC Micro:bit V1 and V2; Arduino Uno R3.
+* **Microcontrollers:** Picaxe 08M2, 14M2, 18X; ESP8266 (Wemos D1 mini); ESP32; BBC Micro:bit V1 and V2; Arduino Uno R3.
 * \*\*Arduino Uno R3:  **Two components are mandatory on this board:** the 4.7 kΩ pull-up must go to **+5 V** (it lifts the calculator's 2.75 V mark above the Uno's 3.0 V threshold — bare, an Uno cannot read a GIII), and the **1N4148 diode must be fitted** (it keeps the Uno's 5 V output off a 3.3 V input that is not 5 V tolerant).
 * **Sampling interval:** 300 seconds is a chosen working limit with margin, not a ceiling. A pause of three hours has been held, and no pause has ever failed for being too long. Battery voltage is the limiting factor. The Casio auto-power-off (APO) is disabled.
 * **999 readings per session:** The calculator's list capacity, confirmed on hardware. MORE readings can be made if readings are spread across lists. Casio data storage capacity is the limiting factor.
@@ -93,7 +93,7 @@ Files are being released in stages. All Casio BASIC and microcontroller code is 
 ## Quick start for teachers
 
 1. **Gather parts:** Casio SB-62 cable or breakout; Picaxe, ESP32, Wemos, micro:bit or Arduino Uno; battery pack; one sensor; jumper wires; the 4.7 kΩ resistor and 1N4148 diode
-2. **Install the calculator program** from `/casio\_calculator\_program`.
+2. **Install the calculator program** from `/casio\\\_calculator\\\_program`.
 3. **Wire and test**:
 
    * A calculator: FX-9750 or FX-9860 series. Casio issues one firmware image for the FX-9750GIII and FX-9860GIII, so the protocol behaves the same on both.
@@ -160,7 +160,7 @@ Every core idea in measurement and control is present, at a scale a student can 
 * Set points and limits - a value is not simply high or low, it is inside or outside a band somebody chose, and choosing that band is an engineering decision with consequences.
 * Control - the microcontroller switches a heater, a fan or a vent. On and off first; proportional control once that is understood.
 * The closed loop - sense, compare against the set point, act, then sense again. The loop is the whole subject, and a student can watch it run.
-* Alarm and fault management - a status field reports which channel is out of range, or that the instrument itself has failed. Distinguishing "the process is wrong" from "the instrument is wrong" is what an instrumentation technician is paid for.
+* Alarm and fault management - a status value reports which channel is out of range, or that the instrument itself has failed. Distinguishing "the process is wrong" from "the instrument is wrong" is what an instrumentation technician is paid for.
 * The human-machine interface - the calculator becomes the operator's panel, showing live values, status and alarms, and accepting commands from the keypad.
 * Fail-safe design - what should the system do when it loses contact, or loses power? A fault must never look like a normal result. That principle runs through every source file in this project, and it is the one an industry assessor will ask about.
 * Data logging as process monitoring - the same record that serves a science investigation is, in an industrial context, the evidence that a process stayed within specification.
