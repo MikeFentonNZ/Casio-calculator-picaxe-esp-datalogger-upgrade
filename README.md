@@ -45,13 +45,13 @@ The encoding method is withheld pending peer-reviewed publication.
 
 Files are being released in stages. All Casio BASIC and microcontroller code is available. Student / teacher material is now available.
 
-* `casio\\\_calculator\\\_program` — the Casio BASIC datalogger program in `.txt` and `.g1m` form, a key-code utility, and installation notes.
-* `microcontroller\\\_sensor\\\_programs` - Picaxe, ESP8266, ESP32, micro:bit and Arduino programs
-* `original\\\_2007-2010\\\_classroom\\\_research` — the 2008 education research report, conference presentations, sensor builds,and analysis of classroom use.
-* `photos\\\_video` — Casio serial protocol diagrams, assembly, and use.
-* `original\\\_2007-2010-classroom-research` — the 2008 education research report, conference presentations, sensor builds,and analysis of classroom use.
-* `serial\\\_protocol\\\_technical\\\_manual` — serial protocol full description, packet formation, and universal SB-62 cable wiring diagram for all microcontroller platforms.
-* `teaching\\\_resources` - student and teacher guide, protocol and packet structure, crossover cable wiring diagrams, experiments, sensor unit construction, safety reminders.
+* `casio_calculator_program` — the Casio BASIC datalogger program in `.txt` and `.g1m` form, a key-code utility, and installation notes.
+* `microcontroller_sensor_programs` - Picaxe, ESP8266, ESP32, micro:bit and Arduino programs
+* `original_2007-2010_classroom_research` — the 2008 education research report, conference presentations, sensor builds,and analysis of classroom use.
+* `photos_video` — Casio serial protocol diagrams, assembly, and use.
+* `original_2007-2010-classroom-research` — the 2008 education research report, conference presentations, sensor builds,and analysis of classroom use.
+* `serial_protocol_technical_manual` — serial protocol full description, packet formation, and universal SB-62 cable wiring diagram for all microcontroller platforms.
+* `teaching_resources` - student and teacher guide, protocol and packet structure, crossover cable wiring diagrams, experiments, sensor unit construction, safety reminders.
 * `LICENSE`, `README.md`, `.gitattributes`
 
 **Next release:** An updated teacher/student manual.
