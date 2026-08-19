@@ -62,7 +62,7 @@ Files are being released in stages. All Casio BASIC and microcontroller code is 
 
 * **Compatible calculators:** Casio FX-9750 and FX-9860 series. All figures below were measured on an FX-9750GIII. Casio issues one firmware image for the FX-9750GIII and FX-9860GIII, so the protocol behaves the same on both.
 * **Microcontrollers:** Picaxe 08M2, 14M2, 18X; ESP8266 (Wemos D1 mini); ESP32; BBC Micro:bit V1 and V2; Arduino Uno R3.
-* \*\*Arduino Uno R3:  **Two components are mandatory on this board:** the 4.7 kΩ pull-up must go to **+5 V** (it lifts the calculator's 2.75 V mark above the Uno's 3.0 V threshold — bare, an Uno cannot read a GIII), and the **1N4148 diode must be fitted** (it keeps the Uno's 5 V output off a 3.3 V input that is not 5 V tolerant).
+* **Arduino Uno R3:  **Two components are mandatory on this board:** the 4.7 kΩ pull-up must go to **+5 V** (it lifts the calculator's 2.75 V mark above the Uno's 3.0 V threshold — bare, an Uno cannot read a GIII), and the **1N4148 diode must be fitted** (it keeps the Uno's 5 V output off a 3.3 V input that is not 5 V tolerant).
 * **Sampling interval:** 300 seconds is a chosen working limit with margin, not a ceiling. A pause of three hours has been held, and no pause has ever failed for being too long. Battery voltage is the limiting factor. The Casio auto-power-off (APO) is disabled.
 * **999 readings per session:** The calculator's list capacity, confirmed on hardware. MORE readings can be made if readings are spread across lists. Casio data storage capacity is the limiting factor.
 * **Non-volitile memory:** The calculator's logged data is retained in the event of a power loss.
@@ -95,7 +95,7 @@ Files are being released in stages. All Casio BASIC and microcontroller code is 
 ## Quick start for teachers
 
 1. **Gather parts:** Casio SB-62 cable or breakout; Picaxe, ESP32, Wemos, micro:bit or Arduino Uno; battery pack; one sensor; jumper wires; the 4.7 kΩ resistor and 1N4148 diode
-2. **Install the calculator program** from `casio\_calculator\_program`.
+2. **Install the calculator program** from `casio_calculator_program`.
 3. **Wire and test**:
 
    * A calculator: FX-9750 or FX-9860 series. Casio issues one firmware image for the FX-9750GIII and FX-9860GIII, so the protocol behaves the same on both.
@@ -154,7 +154,7 @@ In New Zealand it begins at Level 4, and the normal route in is to qualify and w
 
 Which means a secondary student cannot encounter this career through the education system at all. They cannot meet it, try it, or find out whether it suits them, until after they have already committed to a different trade.
 
-###### What a calculator and a microcontroller can actually demonstrate.
+## What a calculator and a microcontroller can actually demonstrate.
 
 Every core idea in measurement and control is present, at a scale a student can hold:
 
