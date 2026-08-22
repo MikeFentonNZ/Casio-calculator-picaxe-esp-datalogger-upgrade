@@ -1,5 +1,5 @@
 #REM
- Casio-NSN-multisensor-08M2.bas
+ Casio-NSN-14M2.bas
  (C) Michael Fenton, MRSNZ, 2026
  Licence: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International 
  (CC BY-NC-SA 4.0)
@@ -15,7 +15,7 @@
  https://mikefentonnz.github.io/projects/casio-calculator-data-logger-hack.html
 
  ================================================================= 
- Version 3.0; 30/07/2026
+ Version 3.1; 30/07/2026
  (Production ready update of 2.0 rework 10/10/2025,
   original version 1.0 code for Picaxe 18X invented 2007)
 
@@ -26,17 +26,12 @@
  suit every use case. MODIFICATION IS EXPECTED - see the list of
  things a class would reasonably change, at the end of this header. 
 
- The NSN (normalised scientific notation) PICAXE implementation is
- validated in hardware.
+ Author: Michael Fenton. Unbounded host wait and MFE both his discovery.
 
- Up to 3 sensora, read synchronously but delivered as consecutive 
- seperate RECEIVE() values.
-
- Bench testing and classroom use in 2008, updated coding and testing
- in 2025 & 2026, all returned 0% packet failure and 0% COM error across  
- sampling intervals from 1 second to 5 minutes, with data logging up to 3 
- hours. Estimated packets transmitted in total 100,000+ in 600+ logging 
- sessions. 
+ Up to 3 sensors, read synchronously but delivered as consecutive 
+ seperate RECEIVE() values. Works with Casio FX-9750G Plus &
+ Casio FX-9750 GIII.
+ 
  =================================================================
  THE DESIGN PRINCIPLE THIS FILE IS BUILT ON
  =================================================================
@@ -52,35 +47,7 @@
  watch the phenomenon and FORGET what is doing the recording. An
  instrument can only be forgotten if, when it fails, this is
  apparent. Trust that has to be checked is not trust.
- =================================================================
- STUDENT / TEACHER WARNING!
- - NEVER use boiling water for temperature calibration (it is NOT needed)
- - NEVER connect mains electricity (240 V / 110 V) to the calculator,
-   to this board, or to any sensor wiring. 
- - NEVER use mains-connected equipment near water.
 
- IF USING BREADBOARD WITH 4-PIN SERIAL TO PC USB CABLE
-    ****  REMOVE RED V+ TO USB 5V HOOK UP WIRE  ****
-    **** OPERATE PICAXE ON 2 x AA BATTERY PACK  ****
-    ****   OR YuRobot 6V to 3.3V POWER MODULE   ****
- 
- Modern (post 2020) Casio calculators are 3.3 V logic. 
- Power the PICAXE at 3 - 3.3 V and keep the resistors below in place.
-
- =================================================================
- A SB-62 cross-over cable has male 2.5mm TRS plugs at both ends.
- 
-  THE CALCULATOR ACCEPTS ONE STOP BIT. IT DOES NOT REQUIRE TWO.
-
-  Both settings were tested here and both work. That confirms
-  Grindheim (2001), who reported the link is asymmetric - two stop
-  bits FROM the calculator, one TO it.
-
-  WHY TWO ALSO WORKS: an extra stop bit is only extra idle line. The
-  receiver has already sampled the byte and is waiting for the next
-  start bit, which simply arrives a fraction later.
- 
-  It is incorrect to say that one stop bit is rejected.
  =================================================================
  Features:
  - Robust and reliable communication - 0% packet loss
@@ -106,16 +73,32 @@
    within a few milliseconds. That is what makes the data "synchronous". 
    Use 10k thermistor dividers and convert to degrees on the calculator.
  ===================================================================
+
+ STUDENT / TEACHER WARNING!
+ - NEVER use boiling water for temperature calibration (it is NOT needed)
+ - NEVER connect mains electricity (240 V / 110 V) to the calculator,
+   to this board, or to any sensor wiring. 
+ - NEVER use mains-connected equipment near water.
+
+ Picaxe can use 5V USB to PC for power with Casio FX-9760G Plus
+ BUT
+ Picaxe interface circuit MUST include the 1N4148 diode for connection
+ to FX-9750 GIII (3V tolerant serial port).
+ 
+ Modern (post 2020) Casio calculators are 3.3 V logic. 
+
+ A SB-62 cross-over cable has male 2.5mm TRS plugs at both ends.
+
  HARDWARE connections(Picaxe 08M2): Wire colours are users choice
 
- - Pin C.0 -> to Casio RX [ring of 2.5mm TRS jack, BLUE wire] via 1N4148
+ - Pin B.0 -> to Casio RX [ring of 2.5mm TRS jack, BLUE wire] via 1N4148
  	      diode; bar to the picaxe  (HSEROUT)
- - Pin C.1 <- from Casio TX [tip of 2.5mm TRS jack, YELLOW wire] (SERIN,
+ - Pin B.1 <- from Casio TX [tip of 2.5mm TRS jack, YELLOW wire] (SERIN,
               and also the hardware hserin pin - see the header)
- - Pin C.1 -> 4.7k pull-up resistor to V+ (3.3 V) - REQUIRED
- - Pin C.2 Sensor 1 (analogue, readadc10) - NTC thermistor or LDR
- - Pin C.3 Sensor 2 (digital IN) - switch - magnetic/touch/impact  
- - Pin C.4 Sensor 3 (analogue, readadc10) - NTC thermistor or LDR OR
+ - Pin B.1 -> 4.7k pull-up resistor to V+ (3.3 V) - REQUIRED
+ - Pin B.2 Sensor 1 (analogue, readadc10) - NTC thermistor or LDR
+ - Pin B.3 Sensor 2 (analogue, readadc10) - NTC thermistor or LDR
+ - Pin B.4 Sensor 3 (analogue, readadc10) - NTC thermistor or LDR OR
  			  DS18B20 temperature sensor
  - 0V      -> Casio GND [sleeve of 2.5mm TRS jack, BLACK wire]
 
@@ -144,7 +127,7 @@
  intervals it does not - see MIN_DELAY_INTERVAL. A slow board does not
  stop or drop a reading; it STRETCHES THE TIME AXIS, silently.
  
- To measure timing you need AN EXTERNAL CLOCK shows. The calculator 
+ To measure timing accuracy you need AN EXTERNAL CLOCK. The calculator 
  cannot report its own timing at all.
 
  WARNING: sertxd blocks while it transmits, serin stops the TIME variable  
@@ -155,8 +138,12 @@
    Receive(N)                 ' ask how many sensors (this file: 1)
    ?->T : Send(T)             ' user types interval 2-300 seconds
    For 1->I To 999
-     Receive(A)               ' PICAXE pauses HERE for T seconds,
-     A->List 1[I]             ' then sends the fresh reading
+     Receive(A)               ' Triggers picaxe timing for T seconds
+     Receive(B)               ' if 2 sensors
+     Recieve(C)               ' if 3 sensors
+     A->List 1[I]    
+     similar for B,C
+     refresh display
    Next
  
  Each reading I was taken at time (I-1)*T seconds. The AC key
@@ -195,9 +182,31 @@
  The parts NOT to change casually are the packet builders and the
  checksum: those are the protocol, and they are verified. 
 
+; ===================================================================
+;  DUAL-GENERATION BUILD - FX-9750G Plus AND FX-9750GIII
+;  2026
+; ===================================================================
+;
+;  1. EVERY PACKET IS BUILT FIRST, THEN SENT.
+;
+;  2. ONE BYTE AT A TIME, EVENLY SPACED.
+;     Every byte goes through put_byte, so each is followed by the
+;     same small gap. A block hserout sends them back to back with no
+;     gap at all, which the G Plus refuses.
+;
+;  3. A 5 ms TURNAROUND BEFORE EVERY SEND.
+;     The calculator needs a moment to stop transmitting and start
+;     listening. Reply too fast and it mishears the first byte.
+;     Found on a PICAXE in 2007; never written down until now.
+;
+;  COST: about 50 ms per packet, all of it inside a window where the
+;  calculator is waiting anyway. Nothing measurable.
+; ===================================================================
 #ENDREM
 
-#picaxe 08M2
+#picaxe 14M2
+#no_data
+disableBOD
 
 ; ===================================================================
 ;  BUILD SWITCHES - DEFINE EXACTLY ONE SENSOR MODE
@@ -213,17 +222,14 @@
 ; ===================================================================
 #DEFINE SIMULATE_SENSORS
 
-#no_data
-disableBOD
-
 ; ===================================================================
 ; PIN ASSIGNMENTS
 ; ===================================================================
-symbol TO_CASIO_pin   = C.0   ; serial out to calculator (ring)
-symbol FROM_CASIO_pin = C.1   ; serial in from calculator (tip)
-symbol SENSOR1_PIN    = C.2   ; analogue sensor 1
-symbol SENSOR2_PIN    = pinC.3; digital sensor 2
-symbol SENSOR3_PIN    = C.4   ; analogue sensor 3 / or DS18B20 temperature sensor
+symbol TO_CASIO_pin   = B.0   ; serial out to calculator (ring)
+symbol FROM_CASIO_pin = B.1   ; serial in from calculator (tip)
+symbol SENSOR1_PIN    = B.2   ; analogue sensor 1
+symbol SENSOR2_PIN    = B.3   ; analogue sensor 2
+symbol SENSOR3_PIN    = B.4   ; analogue sensor 3 / or DS18B20 temperature
 
 ; ===================================================================
 ; PROTOCOL CONSTANTS  (Casio legacy 3-pin serial, 9600 baud 8N2)
@@ -240,6 +246,19 @@ symbol VNAME_A = "A"          ; the sensor1 reading
 symbol VNAME_B = "B"          ; the sensor2 reading
 symbol VNAME_C = "C"          ; the sensor3 reading
 symbol VNAME_T = "T"          ; sampling interval (via Send(T))
+
+; -------------------------------------------------------------------
+;  TURNAROUND - wait before replying
+; -------------------------------------------------------------------
+;  The calculator does not switch from talking to listening instantly.
+;  Answer too quickly and the first bits arrive while its port is
+;  still turning round, so it mishears the byte and rejects the
+;  exchange with $22.
+;
+;  20 quarter-ms = 5 ms at m16. The 2007 figure. Applied INSIDE every
+;  send routine so a new one cannot forget it.
+; -------------------------------------------------------------------
+symbol TURNAROUND = 20
 
 symbol MAX_DELAY_INTERVAL  = 300   ; 5 minutes = proven useful ceiling
 
@@ -277,15 +296,9 @@ symbol MAX_DELAY_INTERVAL  = 300   ; 5 minutes = proven useful ceiling
 ;                      +   50 ms protocol
 ;                      =  800 ms
 ;
-;  HOW IT LOOKS ON THE BENCH: a 5-second interval really takes 5.8 s,
-;  so samples land at 5.8, 11.6, 17.4, 23.2... Read to the nearest
-;  second that is 6, 5, 6, 6, 6, 5 - which looks like jitter and is
-;  not. 5.8 s simply cannot be read as a whole number of seconds.
-;
 ;  *** THE 5-SECOND FLOOR DOES NOT FIX THIS, AND WAS NEVER MEANT TO.
 ;  *** It exists so the 750 ms read FITS INSIDE the read window. That
-;  *** is a scheduling problem. The time axis is a different problem,
-;  *** and the clock stops during the read either way.
+;  *** is a scheduling problem. 
 ;
 ;      interval   time-axis error with a DS18B20
 ;         5 s          16 %
@@ -353,6 +366,22 @@ symbol SP_signInfo = 29   ; sign/magnitude flag byte (packet byte 14)
 symbol SP_exponent = 30   ; exponent E (packet byte 15)
 symbol SP_dec1     = 31   ; BCD decimal digits 1-2  (packet byte 7)
 symbol SP_dec2     = 32   ; BCD decimal digits 3-4  (packet byte 8)
+symbol SP_badbyte  = 39   ; DIAGNOSTIC: the byte that arrived where
+                          ; an ACK was expected
+symbol SP_stage    = 38   ; DIAGNOSTIC: how far the last transaction
+                          ; got. Reported ONLY on failure.
+symbol LED_PIN     = C.2  ; DIAGNOSTIC: shares SENSOR1_PIN. Sensor 1
+                          ; is unavailable while diagnosing - an 08M2
+                          ; has no free pin.
+symbol SP_PKT      = 40   ; *** the sixteen-byte value packet
+                          ; is BUILT here, at 40-55, and only then
+                          ; transmitted. The 18X code of 2007 did the
+                          ; same thing the only way PICAXE BASIC
+                          ; allowed at the time - one serout with the
+                          ; whole packet in it, every byte already
+                          ; known before the first one left.
+symbol SP_dec3     = 34   ; *** v10 *** BCD decimal digits 5-6
+                          ; (packet byte 8). 
 
 ; ===================================================================
 ; VARIABLES  (b0-b27 / w0-w13; a word = two bytes)
@@ -424,17 +453,13 @@ symbol pollGuard    = w11     ; b22,b23 - the poll timeout counter.
                               ; decode_casio_value and normalise_value,
                               ; which is safe ONLY because poll_byte
                               ; zeroes it on entry every time and it is
-                              ; dead outside the routine. Checked: no
-                              ; w11 value is live across a poll_byte
-                              ; call.
+                              ; dead outside the routine. 
 
-symbol POLL_GUARD   = 2500    ; ~2 s at m16, sized from the bench: a
-                              ; 6-operation poll pass measured 965 us on
-                              ; 8 August, so this 5-operation loop is
-                              ; ~805 us. The exact figure does not
-                              ; matter - it fires only on link failure
-                              ; and need only exceed the calculator's
-                              ; ~300 ms turnaround.
+symbol POLL_GUARD   = 625     ; ~5 s at m16. Raised from 2500 (~2 s)
+                              ; for FX-9750G Plus support.
+                              ;
+                              ; 5 s is DELIBERATELY GENEROUS, not a
+                              ; measured requirement. 
 
 ; ===================================================================
 ;  DETECTING A MISSING DS18B20 
@@ -449,7 +474,11 @@ symbol DS18B20_ABSENT = 999   ; sent when no sensor answered at start-up
 
 symbol SENSOR_MAX    = 1023   ; upper limit of a legitimate reading
 
-; FREE for expansion: b18
+; --- v6: b18 is no longer free ---------------------------------------
+symbol txByte        = b18    ; the single byte put_byte transmits.
+
+; FREE for expansion: none. The next variable needed must come from
+; the scratchpad (peek/poke), as the packet builder already does.
 
 ; ===================================================================
 ; INITIALISATION
@@ -468,18 +497,11 @@ init:
                               ; takes the pin. See the header - this
                               ; is the ONLY `high` on this pin now.
   hsersetup B9600_16, %00     ; %00 = true polarity, idle high.
-                              ; Proven by loopback.
-
-  ; The UART leaves a glitch byte in the two-deep receive FIFO after
-  ; hsersetup. It is NOT drained here, and that is deliberate: the
-  ; attention poll in main_loop discards anything that is not $15, so
-  ; the glitch byte is eaten by the same lines that do the real work.
-  ; A separate drain step could throw the attention byte away. 
 
   disabletime                 ; timer starts at the first reading
 
   ; clear the packet-building scratch RAM
-  for b19 = SP_intDigit to SP_dec2
+  for b19 = SP_intDigit to SP_dec3
     poke b19, 0
   next b19
 
@@ -501,6 +523,8 @@ init:
   sensor2Neg    = 0
   sensor3Neg    = 0
 
+  pause 4000   ; pause 1 second to let picaxe settle
+
 ; ===================================================================
 ; MAIN LOOP - wait for the calculator to speak first
 ; The calculator opens every transaction with attention byte $15.
@@ -508,26 +532,7 @@ init:
 ; ===================================================================
 main_loop:
   ; Wait for the attention signal from the Casio.
-  ; -----------------------------------------------------------------
-  ; THE ATTENTION POLL
-  ;
-  ; THREE LINES, AND EACH ONE IS LOAD-BEARING:
-  ;   rxWord = $FFFF    hserin leaves the variable UNCHANGED if no byte
-  ;                     arrived, so the sentinel must be re-armed every
-  ;                     time. $FF is a legal data byte; $FFFF is not.
-  ;   hserin rxWord     non-blocking. Returns instantly either way.
-  ;   the two ifs       loop back on "nothing yet" AND on "something,
-  ;                     but not $15". That second one replaces serin's
-  ;                     (":") qualifier, and it is also what eats the
-  ;                     stale packet bytes and the hsersetup glitch
-  ;                     byte without a separate drain step that could
-  ;                     swallow the attention byte. See the header.
-  ;
-  ; THE CLOCK RUNS THROUGH ALL OF THIS. That is the entire gain: serin
-  ; disabled the timer interrupt and lost the calculator's ~300 ms
-  ; turnaround every sample; a busy loop keeps perfect time.
-  ; No timeout is needed because a poll is never disarmed.
-  ; -----------------------------------------------------------------
+
   rxWord = $FFFF
   hserin rxWord
   if rxWord = $FFFF then main_loop           ; nothing yet
@@ -538,7 +543,10 @@ main_loop:
 
   if inByte = CASIO_ATTENTION then
 
+
     ; Send immediate response (Picaxe is present and ready)
+    pause TURNAROUND          ; let the calculator turn round first
+    poke SP_stage, 1          ; DIAG: attention byte seen
     hserout 0, (PICAXE_PRESENT)
 
     ; The calculator now sends a 50-byte packet. Both kinds put the
@@ -547,58 +555,51 @@ main_loop:
     ;   ":VAL..." (Send)    -> command 'V'
     ; Read ':' + command + 9 bytes + vname = the part we need.
 
-    serin FROM_CASIO_pin, T9600_16, (":"), command, inByte, inByte, inByte, inByte, inByte, inByte, inByte, inByte, inByte, vname
+    serin [16000, ml_report], FROM_CASIO_pin, T9600_16, (":"), command, inByte, inByte, inByte, inByte, inByte, inByte, inByte, inByte, inByte, vname
 
-    ; Let the remaining ~38 bytes of the 50 finish arriving before
-    ; we answer (50 ms; a byte takes ~1.15 ms at 9600 baud 8N2).
-    pause 200                 ; 200/4 = 50 ms at 16 MHz
+
+    ; Let the remaining ~38 bytes of the 50 finish arriving
+
+    pause 300                 ; 300/4 = 75 ms at 16 MHz
 
     ; Process command from Casio
+    poke SP_stage, 2          ; DIAG: request header read
+
     if command = CMD_RECEIVE then
       gosub handle_receive    ; calculator wants a value (No. of sensors or sensor reading)
     elseif command = CMD_SEND then
-      gosub handle_incoming   ; calculator sent a number (T; time delay, or remote control) 
+      gosub handle_incoming   ; calculator sent a number (T; time delay, or remote control)
+    else
+      poke SP_stage, 9        ; DIAG: command was neither "R" nor "V"
     endif
+
+    ; ---------------------------------------------------------------
+    ; DIAG - REPORT ONLY ON FAILURE.
+    ; A good transaction ends at stage 8 and NOTHING HAPPENS. Any
+    ; other value means it broke, the calculator has already raised
+    ; Com ERROR and stopped, so blocking here costs nothing.
+    ; ---------------------------------------------------------------
+    peek SP_stage, b26
+    if b26 <> 8 then
+      gosub blink_stage
+    endif
+    poke SP_stage, 0
 
   endif
 
+ml_report:
+  ; Reached if the request packet never arrives. Nothing to do but
+  ; start listening again.
   goto main_loop
 
-; ===================================================================
-;  poll_byte - ONE BYTE, WITHOUT STOPPING THE CLOCK
-; ===================================================================
-;  Replaces  serin [timeout, label], FROM_CASIO_pin, T9600_16, inByte
-;  RETURNS   pollOK = 1 and inByte = the byte
-;            pollOK = 0 if the guard expired
-; ===================================================================
 poll_byte:
-  ; -----------------------------------------------------------------
-  ; DRAIN FIRST.
-  ;
-  ; The UART receives EVERYTHING the calculator sends, in parallel
-  ; with the serin packet reads. Those reads take 11 or 15 bytes of a
-  ; FIFTY-byte packet, so on every transaction the two-deep FIFO is
-  ; left holding stale packet bytes.
-  ;
-  ; Without this drain, poll_byte returns one of those stale bytes
-  ; instead of the ACK. 
-  ;
-  ; WHY DRAINING IS SAFE HERE, WHEN IT WOULD BE A BUG IN main_loop.
-  ; Every call to poll_byte happens IMMEDIATELY AFTER WE HAVE
-  ; TRANSMITTED. The calculator's turnaround is about 300 ms and this
-  ; drain takes microseconds, so nothing we want can have arrived yet:
-  ; anything in the FIFO at this instant is old BY DEFINITION.
-  ;
-  ; In main_loop the opposite holds - the awaited byte can arrive at
-  ; any moment - which is why THAT loop discards non-$15 bytes instead
-  ; of draining. Same problem, two correct answers, and using either
-  ; one in the other place breaks it.
-  ; -----------------------------------------------------------------
+
 poll_byte_drain:
   rxWord = $FFFF
   hserin rxWord
   if rxWord <> $FFFF then poll_byte_drain   ; until empty
 
+poll_byte_nodrain:
   pollGuard = 0               ; MUST reset - w11 is scratch elsewhere
 
 poll_byte_loop:
@@ -615,44 +616,42 @@ poll_byte_got:
   pollOK = 1
   return
 
-; ===================================================================
-; HANDLE Receive(x) - THE HEART OF THE LOGGER
-;
-; Normal protocol flow (all at 9600 baud):
-;   us:   ACK                  "request received"
-;   them: ACK
-;   us:   50-byte description  "variable x is real, in use"
-;   them: ACK
-;         |   <===  FENTON'S TIMING WINDOW  ===
-;         |   The pause goes RIGHT HERE, between the acknowledged
-;         |   description and the value packet. The calculator sits
-;         |   in Receive() and waits at least 300 s proven without 
-;         |   COM error. This position is the useful discovery
-;         |
-;   us:   16-byte value packet
-;   them: ACK
-;   us:   50-byte END packet
-; ===================================================================
 handle_receive:
+  poke SP_stage, 3            ; DIAG: command read as "R"
+
+
   ; Send acknowledgment
+  pause TURNAROUND            ; let the calculator turn round first
   hserout 0, (CASIO_ACK)
-  
-  ; Wait for Casio's acknowledgment (timeout after 2 seconds)
-  gosub poll_byte                   ; POLLED - see poll_byte
+
+  gosub poll_byte                   ; POLLED - drain needed here
+
   if pollOK = 0 then request_timeout
   if inByte <> CASIO_ACK then
     return                    ; calculator gave up (AC key?)
   endif
 
-  ; Send description packet (tells Casio what variable we're sending)
+
+  poke SP_stage, 4            ; DIAG: calculator said go ahead
+
   gosub send_description
+  poke SP_stage, 5            ; DIAG: description sent
 
   ; Wait for acknowledgment
-  gosub poll_byte                   ; POLLED - see poll_byte
-  if pollOK = 0 then request_timeout
+  gosub poll_byte                   ; drain RESTORED - removing it
+                                    ; made things worse, see header
+
+  ; --- DIAG: the two ways this can fail are now different codes ---
+  if pollOK = 0 then
+    poke SP_stage, 5                ; NOTHING arrived in ~2 s
+    goto request_timeout
+  endif
   if inByte <> CASIO_ACK then
+    poke SP_badbyte, inByte         ; a byte arrived, and it was not $06
+    poke SP_stage, 11
     return
   endif
+
 
      ; == MICHAEL FENTON HOST-WAIT WINDOW DISCOVERY: The value window ==
      ; Pausing here during RECEIVE does NOT trigger COM ERROR on Casio
@@ -661,12 +660,8 @@ handle_receive:
   ; Determine which variable Casio requested
   ;
   ; *** EVERY BRANCH MUST SET isNegative AS WELL AS currentValue. ***
-  ; The two together are the reading - a magnitude with no sign is
-  ; only half the number. isNegative is a WORKING bit reloaded here
-  ; for each packet; the stored signs live in sensor1Neg/2Neg/3Neg.
-  ; Omitting it does not fail, it inherits whatever the previous
-  ; packet used, which is how sensor 3's minus sign reached sensors
-  ; 1 and 2. If you add a variable D, set both or it will do it again.
+
+  poke SP_stage, 6            ; DIAG: DESCRIPTION ACCEPTED
 
   if vname = VNAME_N then
   ; Variable N: Send sensor count (how many sensors connected)
@@ -705,30 +700,21 @@ handle_receive:
   endif
 
   gosub send_value_packet
-  
-  ; Wait for final acknowledgment (optional - continue anyway if timeout)
-  gosub poll_byte   
-  
+  poke SP_stage, 7            ; DIAG: value packet sent
+
+  gosub poll_byte             ; drain RESTORED
+  if pollOK = 1 then
+    if inByte = CASIO_ACK then
+      poke SP_stage, 8        ; DIAG: FULL SUCCESS
+    else
+      poke SP_stage, 10       ; DIAG: a byte came back, not $06
+    endif
+  endif
+
 request_timeout:
   gosub send_end_packet
   return
 
-; ===================================================================
-; WAIT FOR THE INTERVAL, THEN READ SENSOR - drift-free timing
-;
-; 'time' ticks in real seconds (even at 16 MHz). The next reading is
-; always due at nextSendTime, and after each reading we add EXACTLY
-; timeInterval. The schedule is arithmetic: protocol overhead cannot
-; accumulate into drift.  
-;
-; The sensor is read 700 ms BEFORE the due time, so the data is fresh
-; and the read time is absorbed inside the interval. If using slower
-; sensors, increase that margin (and MIN_DELAY_INTERVAL) to suit.
-;
-; Limits: 'time' is a WORD variable, it wraps after 65535 s (~18 hours).
-; 999 readings x 300 s = 83 hours would wrap; at 300 s intervals
-; keep runs under ~215 readings, or reset between runs.
-; ===================================================================
 wait_for_interval:
   ; ==== FIRST READING AT T=0 (Special case) ====
   ; The very first reading happens immediately at time zero
@@ -764,19 +750,12 @@ wait_for_interval:
   ; - 1200, which is 300 ms at 16 MHz - so the reading lands about
   ; 700 ms BEFORE the packet is due.
   ;
-  ; A CONSTANT AND THE COMMENT THAT DESCRIBES IT MUST MOVE TOGETHER.
-  ;
-  ; Why not read right on the deadline: at short intervals the ADC work
-  ; would butt up against the send, leaving nothing in hand if a read
-  ; runs long. A dedicated slot removes that collision and still keeps
-  ; the sample well inside its own interval.
   ; The guard skips the wait if we are already running late.
 
   if time < nextSendTime then
     pause SENSOR_READ_OFFSET
   endif
 
-  ; ==== READ ALL SENSORS ====
   gosub read_all_sensors            ; microseconds apart, in-window
 
   ; ==== WAIT UNTIL EXACT SEND TIME ====
@@ -798,10 +777,6 @@ wait_for_interval:
 
   return
 
-; ===================================================================
-; READ THE SENSORS (together - this is the "synchronous" in
-; synchronous multi-sensor logging)
-; ===================================================================
 read_all_sensors:
   ; -------------------------------------------------------------------
   ; ONE OF THE THREE BLOCKS BELOW IS COMPILED - choose with a #DEFINE at
@@ -819,7 +794,7 @@ read_all_sensors:
 
 #IFDEF SIMULATE_SENSORS
   ; --- staircases, in the OFFSET band so the display is plausible ----
-  sensor1Value = sensor1Value + 1
+  sensor1Value = sensor1Value + 2
   sensor2Value = sensor2Value + 25
   sensor3Value = sensor3Value + 111
   if sensor1Value >SENSOR_MAX then
@@ -849,47 +824,8 @@ read_all_sensors:
   if sensorCount >= 2 then
    gosub read_channel2
   endif
-
-  ; readtemp gives whole degrees C, negatives as 128 + magnitude.
-  ; A MISSING sensor leaves the line high through the 4.7k pull-up and
-  ; readtemp returns $FF = 255, which would mean -127 C - not a
-  ; plausible school measurement, so it is a safe sentinel.
   
   if sensorCount >= 3 then
-    ; PRESENCE IS DECIDED BY THE ROLL CALL IN init, NOT BY THE READING.
-    ; ASK EVERY SAMPLE, NOT ONCE AT SWITCH-ON.
-    ; A sensor unplugged DURING a run, readtemp returns 0, and
-    ; the logger reported a confident 0 degrees C - a fault wearing the
-    ; costume of a measurement, and the exact thing this project refuses
-    ; to ship. Now presence is re-established before every reading.
-    ;
-    ; *** readowsn WRITES INTO b6 TO b13 *** - sensor3Value (b6,b7),
-    ; command (b8), vname (b9), inByte (b10), checksum (b11) and
-    ; currentValue (b12,b13). IT IS SAFE HERE, and that was checked
-    ; rather than assumed: by this point the calculator's request has
-    ; been served as far as vname, the next serin reloads command,
-    ; vname and inByte, the checksum is rebuilt from scratch when the
-    ; packet is assembled, and sensor3Value is overwritten three lines
-    ; below. Nothing that matters is read again before it is rewritten.
-    ;
-    ; IT IS NOT SAFE ANYWHERE INSIDE A TRANSACTION. Move this and you
-    ; will destroy the variable name being served and the checksum
-    ; being built, and the packet will go out corrupt with no error.
-    ;
-    ; Cost: a 1-Wire reset plus 64 bits, a few ms, and it stops the
-    ; timer like readtemp does. Against the 750 ms already spent on the
-    ; conversion, and the 5 s interval floor, this is noise.
-    ; *** CLEAR b6 FIRST. THIS LINE IS THE WHOLE DETECTOR. ***
-    ;
-    ; From a cold start b6 is 0, readowsn finds nothing, b6 stays 0,
-    ; and absence is detected. With a sensor already found, b6 holds
-    ; $28; pull the wire and readowsn appears to leave it there, so
-    ; the chip goes on believing a sensor is present and reports the
-    ; 0 that readtemp hands back - a fault dressed as a measurement.
-    ;
-    ; ZEROING b6 MAKES A SILENT NO-OP READ AS ABSENCE, which is the
-    ; only safe direction for the failure to fall.
-
     b6 = 0
     readowsn SENSOR3_PIN
     ds18b20Here = 0
@@ -920,11 +856,6 @@ read_all_sensors:
 
   return
 
-; -------------------------------------------------------------------
-;  Other channels: three reads averaged, then offset.
-;  ~5 ms per channel - against a 325 ms read slot at a 1 s interval,
-;  averaging is not a constraint.
-; -------------------------------------------------------------------
 read_channel1:
   tempWord = 0
   readadc10 SENSOR1_PIN, sensor1Value
@@ -940,11 +871,25 @@ read_channel1:
   return
 
 read_channel2:
-   if SENSOR2_PIN = 0 then 
-	sensor2Value = 0
-   else 
-	sensor2Value = 1
-   Endif 
+   ; if using a switch
+   
+   ; if SENSOR2_PIN = 0 then 
+   ;	sensor2Value = 0
+   ; else 
+   ;	sensor2Value = 1
+   ; Endif
+
+  tempWord = 0
+  readadc10 SENSOR2_PIN, sensor2Value
+  tempWord = tempWord + sensor2Value
+  pause 5
+  readadc10 SENSOR2_PIN, sensor2Value
+  tempWord = tempWord + sensor2Value
+  pause 5
+  readadc10 SENSOR2_PIN, sensor2Value
+  tempWord = tempWord + sensor2Value
+  tempWord = tempWord / 3
+  sensor2Value = tempWord
   return
 
 read_channel3:
@@ -961,21 +906,9 @@ read_channel3:
   sensor3Value = tempWord
   return
   
-; ===================================================================
-; HANDLE Send(x) ? the calculator is giving US a number (T)
-;
-; 16-byte value packet layout (see Technical Reference):
-; Packet structure:
-; Byte 0: Preamble (0x3A = ':')
-; Bytes 1-4: Header (0x00 0x01 0x00 0x01)
-; Byte 5: Integer digit (I)
-; Bytes 6-12: Decimal digits (BCD packed)
-; Byte 13: Sign info
-; Byte 14: Exponent
-; Byte 15: Checksum
-; ===================================================================
 handle_incoming:
   ; Send acknowledgment 
+  pause TURNAROUND            ; let the calculator turn round first
   hserout 0, (CASIO_ACK)
 
   ; Read the 15 bytes after ':'. The 7th BCD byte goes into b23
@@ -989,8 +922,10 @@ handle_incoming:
   poke SP_signInfo, b26
   poke SP_exponent, b27
 
+  pause TURNAROUND            ; let the calculator turn round first
   hserout 0, (CASIO_ACK)
 
+  poke SP_stage, 8            ; DIAG: Send(x) completed - counts as OK
   gosub decode_casio_value    ; -> currentValue (0..65535)
 
   if vname = VNAME_T then
@@ -1012,11 +947,6 @@ handle_incoming:
   endif
   return
 
-; ===================================================================
-; DECODE A CASIO NUMBER (integer 0..65535 is all a PICAXE can hold)
-; The number arrives normalised: I.DDDDDDDDDDDDDD x 10^E
-; For our use (T = 2..300) only exponents 0..4 matter.
-; ===================================================================
 decode_casio_value:
   peek SP_signInfo, b19
   b19 = b19 & $01             ; magnitude flag: 0 means |value| < 1
@@ -1073,27 +1003,119 @@ decode_casio_value:
   return
 
 ; ===================================================================
-; SEND THE 50-BYTE DESCRIPTION PACKET  ":VAL...Variable R..."
-; Tells the calculator: "variable <vname> is a real number, in use."
-; Checksum reduces to the constant expression 273 - vname (verified).
+;  blink_stage - DIAGNOSTIC.  CALLED ONLY WHEN A TRANSACTION FAILED.
 ; ===================================================================
-send_description:
-  checksum = 273 - vname ; Optimized: was $D0 - vname + 65
+;    1   $15 seen, $13 sent, no request packet followed
+;    2   request header read, but no handler ran
+;    3   inside handle_receive, died waiting for the first ACK
+;    4   calculator acknowledged our ACK
+;    5   description sent, and NOTHING came back in ~2 s
+;   11   description sent, a byte came back and it was NOT $06.
+;        The byte is reported FIRST, as two groups of SHORT flashes
+;        (100 ms), one second apart. EACH GROUP IS THE NIBBLE PLUS
+;        ONE - subtract one from each:
+;            1,7  = $06     4,11 = $3A     2,6  = $15
+;        $06 here would mean the ACK arrived and was misread.
+;        $3A or $15 means a stale packet byte - the link is out of
+;        step rather than the packet refused.
+;    6   *** DESCRIPTION ACCEPTED *** - died at the value packet
+;    7   value packet sent, nothing came back within ~2 s
+;    9   command letter was neither "R" nor "V"
+;   10   a byte came back after the value packet and it was NOT $06
+;
+;  Stage 8 is success and never reaches here.
+;  A ~2 s stall before the report is POLL_GUARD expiring - nothing
+;  arrived. An instant report means a byte arrived that was not $06.
+;
+;  Blocks for up to 20 s, safe ONLY because the calculator has
+;  already errored and stopped. NEVER call it on a good transaction.
+; ===================================================================
+blink_stage:
+  peek SP_stage, b26
+  if b26 = 0 then blink_done
+  if b26 <> 11 then bs_stage
+  low LED_PIN
+  pause 4000
+  peek SP_badbyte, b26
+  b19 = b26 / 16
+  b19 = b19 + 1
+  gosub blink_fast
+  pause 4000
+  peek SP_badbyte, b26
+  b19 = b26 & $0F
+  b19 = b19 + 1
+  gosub blink_fast
+  pause 8000
+  peek SP_stage, b26
 
-  hserout 0, (CASIO_PREAMBLE, $56, $41, $4C, $00, $56, $4D, $00, $01, $00, $01)
-  hserout 0, (vname)
-  hserout 0, ($FF, $FF, $FF, $FF, $FF, $FF, $FF)
-  hserout 0, ($56, $61, $72, $69, $61, $62, $6C, $65, $52, $0A)
-  hserout 0, ($FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF)
-  hserout 0, (checksum)
+bs_stage:
+
+  low LED_PIN
+  for b19 = 1 to b26
+    high LED_PIN
+    pause 4000                ; 1 s at m16
+    low LED_PIN
+    pause 4000
+  next b19
+  pause 8000                  ; 2 s gap
+
+blink_done:
+  low LED_PIN
   return
 
-; ===================================================================
-; SEND THE 16-BYTE VALUE PACKET
-; Number format: I.DDDDDDDDDDDDDD x 10^E (normalised scientific
-; notation - the same form students meet in Year 9-10 maths).
-; ===================================================================
+blink_fast:
+  for b18 = 1 to b19
+    high LED_PIN
+    pause 400                 ; 100 ms
+    low LED_PIN
+    pause 1200                ; 300 ms
+  next b18
+  return
+
+put_byte:
+  hserout 0, (txByte)
+  return
+
+send_description:
+  pause TURNAROUND            ; let the calculator turn round first
+  checksum = 273 - vname ; Optimized: was $D0 - vname + 65
+
+  ; bytes 0-10 : ':' V A L 00 V M 00 01 00 01
+  for b19 = 0 to 10
+    lookup b19, ($3A, $56, $41, $4C, $00, $56, $4D, $00, $01, $00, $01), txByte
+    gosub put_byte
+  next b19
+
+  ; byte 11 : the variable name
+  txByte = vname
+  gosub put_byte
+
+  ; bytes 12-18 : seven $FF
+  txByte = $FF
+  for b19 = 1 to 7
+    gosub put_byte
+  next b19
+
+  ; bytes 19-28 : "VariableR" + $0A
+  for b19 = 0 to 9
+    lookup b19, ($56, $61, $72, $69, $61, $62, $6C, $65, $52, $0A), txByte
+    gosub put_byte
+  next b19
+
+  ; bytes 29-48 : twenty $FF
+  txByte = $FF
+  for b19 = 1 to 20
+    gosub put_byte
+  next b19
+
+  ; byte 49 : checksum
+  txByte = checksum
+  gosub put_byte
+  return
+
 send_value_packet:
+  pause TURNAROUND            ; let the calculator turn round first
+
   if currentValue = 0 then
     gosub send_zero_packet    ; zero has its own special packet
     return
@@ -1105,7 +1127,6 @@ send_value_packet:
 
   gosub normalise_value
 
-  ; sign/info byte: bit0 = |value|>=1, bits 6+4 = negative
   b19 = 0
   if isNegative = 1 then
     b19 = $50 ; Bits 6 & 4 for negative
@@ -1115,49 +1136,88 @@ send_value_packet:
   endif
   poke SP_signInfo, b19
 
-  ; Send 16-byte packet (optimized: using scratchpad values)
-  ; transmit: ':' 00 01 00 01, I, 7 BCD bytes, sign, exponent, sum
-  peek SP_intDigit, b19
-  hserout 0, (CASIO_PREAMBLE, $00, $01, $00, $01, b19)
-  
-  ; Send 7 decimal bytes (only first 2 have real data for our range)
-  peek SP_dec1, b19
-  peek SP_dec2, b20
-  hserout 0, (b19, b20, $00, $00, $00, $00, $00)
-  
-  ; Send sign and exponent
-  peek SP_signInfo, b19
-  peek SP_exponent, b20
-  hserout 0, (b19, b20)
-  
-  ; Calculate and send checksum
+  ; Checksum FIRST - never while the packet is going out.
   gosub calculate_checksum
-  hserout 0, (checksum)
+  gosub build_value_packet
+  gosub emit_value_packet
   return
 
-; ===================================================================
-; SEND ZERO (0 x 10^0, magnitude flag clear, checksum constant $FE)
-; ===================================================================
+build_value_packet:
+  b22 = SP_PKT
+
+  for b19 = 0 to 4                  ; bytes 0-4 : ':' 00 01 00 01
+    lookup b19, ($3A, $00, $01, $00, $01), b26
+    poke b22, b26
+    b22 = b22 + 1
+  next b19
+
+  peek SP_intDigit, b26             ; byte 5
+  poke b22, b26
+  b22 = b22 + 1
+
+  peek SP_dec1, b26                 ; byte 6
+  poke b22, b26
+  b22 = b22 + 1
+
+  peek SP_dec2, b26                 ; byte 7
+  poke b22, b26
+  b22 = b22 + 1
+
+  peek SP_dec3, b26                 ; byte 8
+  poke b22, b26
+  b22 = b22 + 1
+
+  b26 = 0                           ; bytes 9-12
+  for b19 = 1 to 4
+    poke b22, b26
+    b22 = b22 + 1
+  next b19
+
+  peek SP_signInfo, b26             ; byte 13
+  poke b22, b26
+  b22 = b22 + 1
+
+  peek SP_exponent, b26             ; byte 14
+  poke b22, b26
+  b22 = b22 + 1
+
+  poke b22, checksum                ; byte 15
+  return
+
+emit_value_packet:
+  for b19 = 0 to 15
+    b22 = SP_PKT
+    b22 = b22 + b19
+    peek b22, txByte
+    gosub put_byte
+  next b19
+  return
+
 send_zero_packet:
-  hserout 0, (CASIO_PREAMBLE, $00, $01, $00, $01, $00, $00, $00, $00, $00, $00, $00, $00)
-  hserout 0, ($00, $00, $FE)
+  pause TURNAROUND          
+
+  for b19 = 0 to 4
+    lookup b19, ($3A, $00, $01, $00, $01), txByte
+    gosub put_byte
+  next b19
+
+  txByte = $00
+  for b19 = 1 to 10
+    gosub put_byte
+  next b19
+
+  txByte = $FE
+  gosub put_byte
   return
 
-; ===================================================================
-; Limited Precision Normalization  
-; NORMALISE w10 (b20,b21) INTO I.DDDD x 10^E FORM
-; Fills SP_intDigit, SP_dec1, SP_dec2, SP_exponent.
-; Max input 65535 -> 5 significant digits -> 2 BCD bytes sufficient.
-; Uses w11 (b22,b23) for remainders and b19 for digit assembly 
-; deliberately clear of the timing variables.
-; ===================================================================
 normalise_value:
   ; Clear decimal bytes in scratchpad
   poke SP_dec1, 0
   poke SP_dec2, 0
+  poke SP_dec3, 0
 
   isLarge = 1                 ; everything we send here is >= 1
-  
+
   ; w10 (b20,b21) contains the value to normalize
   if w10 < 10 then                      ; 1-9:  I x 10^0
     poke SP_intDigit, b20
@@ -1225,50 +1285,6 @@ normalise_value:
   endif
   return
 
-; ===================================================================
-; PACKET CHECKSUM  -  the same rule for every packet in this protocol
-;
-; IN WORDS: add up every byte of the packet AFTER the ':' preamble
-; and BEFORE the checksum itself. The checksum is whatever you must
-; add to that total to bring it back to zero, working in single
-; bytes. In eight bits 200 + 56 = 0, because 256 wraps round to
-; nothing. That is called a TWO'S COMPLEMENT.
-;
-; It is the same rule for the 16-byte value packet and the 50-byte
-; description and END packets. There is only one rule to learn.
-;
-; HOW THIS CODE DOES IT: the traditional form, used by every
-; published description of the protocol, adds the ':' in at the
-; start and takes it out again at the end:
-;
-;     total    = $3A + (every other byte)
-;     b19      = total - $3A     ; takes the ':' back out
-;     b19      = 255 - b19       ; flips the bits (one's complement)
-;     checksum = b19 + 1         ; ...plus one = two's complement
-;
-; Adding $3A and then subtracting it does nothing at all, so the two
-; forms give the same answer. The traditional shape is kept here so
-; this code can be read side by side with the published references.
-;
-; Other languages write the bit flip as ~x. PICAXE BASIC has no ~
-; operator, so it is written as 255 - x.
-;
-; WHY SOME CHECKSUMS ARE CONSTANTS: if every byte of a packet is
-; fixed, its checksum is fixed too. That is why END is always $56,
-; the zero packet always $FE, and the description packet always
-; 273 - vname (the variable name being the one byte that changes).
-;
-;   *** A constant is only correct while nothing else in the packet
-;   *** changes. Anything you build whose content varies MUST
-;   *** calculate its checksum, not store it.
-;
-; COUNTING BYTES: this block counts from 1, like the technical
-; reference - bytes 1 to 15 are summed and byte 16 is the checksum.
-; The comments inside the routine below count from 0, like the code.
-; Both are correct; they are simply different conventions.
-;
-; See: RIGEL Casio Protocol Technical Reference, Part II Chapter B.
-; ===================================================================
 calculate_checksum:
     ; Sum ALL 15 bytes: bytes 0-14
   checksum = $3A + $00 + $01 + $00 + $01 ; Bytes 0-4 (preamble + header)
@@ -1276,14 +1292,14 @@ calculate_checksum:
   ; Byte 5: intDigit
   peek SP_intDigit, b19
   checksum = checksum + b19
-  
-  ; Bytes 6-12: decimal bytes (only dec1 and dec2 have real data)
   peek SP_dec1, b19
   checksum = checksum + b19
   peek SP_dec2, b19
   checksum = checksum + b19
-  
-  ; the five remaining BCD bytes are $00 = 0 so nothing to add
+  peek SP_dec3, b19
+  checksum = checksum + b19
+
+  ; the four remaining BCD bytes are $00 = 0 so nothing to add
   
   ; Byte 13: signInfo
   peek SP_signInfo, b19
@@ -1299,145 +1315,31 @@ calculate_checksum:
   checksum = b19 + 1
   return
 
-; ===================================================================
-; SEND THE 50-BYTE END PACKET  ":END" + 45 x $FF + constant $56
-; ===================================================================
 send_end_packet:
-  ; Send header: :END (0x3A 0x45 0x4E 0x44)
-  hserout 0, (CASIO_PREAMBLE, "E", "N", "D")
-  
-  ; Send 45 bytes of 0xFF padding (9 bytes ? 5 iterations)
-  for b19 = 1 to 5
-    hserout 0, ($FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF)
+  pause TURNAROUND            ; let the calculator turn round first
+  ; 50 bytes: ':' E N D, then 45 x $FF, then the constant $56.
+
+  for b19 = 0 to 3
+    lookup b19, ($3A, $45, $4E, $44), txByte
+    gosub put_byte
   next b19
-  
-  ; Send final 1 byte padding + checksum (0x56 - constant for END)
-  hserout 0, ($56)
+
+  ; 45 bytes of $FF padding. b19 is a BYTE, so 45 is safely in range.
+  txByte = $FF
+  for b19 = 1 to 45
+    gosub put_byte
+  next b19
+
+  ; final byte: the END checksum, constant $56
+  txByte = $56
+  gosub put_byte
   return
 
 
 #REM
 
-; ===================================================================
-; STUDENT NOTES - HOW THIS VERSION SENDS NEGATIVE READINGS
-; ===================================================================
- 
-This file can send a reading of -3.7 to the calculator and have it
-arrive as -3.7. Here is how to switch it on.
-
-WHY A PICAXE NEEDS A TRICK AT ALL
-A PICAXE word variable holds 0 to 65535. There is no minus sign
-anywhere in the chip. Subtract past zero and the value wraps round
-to 65535 instead of going negative. So the sign cannot be kept in
-the number itself - it has to be carried separately.
-
-WHERE THE SIGN LIVES IN THIS FILE
-In a single bit per sensor - sensor1Neg, sensor2Neg and sensor3Neg
-in the symbol list above. The reading itself stays in sensorNValue
-as a plain positive magnitude. Two pieces of information, kept
-apart:
-
-      sensor1Value = 37  with  sensor1Neg = 1   means  -37
-      sensor1Value = 37  with  sensor1Neg = 0   means  +37
-
-This arrangement has a name - SIGN AND MAGNITUDE - and it is one of
-the ways real computers store signed numbers.
-
-HOW THE SIGN REACHES THE CALCULATOR
-Find these lines in send_value_packet:
-
-      b19 = 0
-      if isNegative = 1 then
-        b19 = $50 ; Bits 6 & 4 for negative
-      endif
-
-Byte 14 of the value packet is the sign/info byte. Setting bits 6
-and 4 tells the calculator that the number is negative, and it
-stores a genuinely negative value in its list. Nothing has to be
-undone at the calculator end. No arithmetic is needed there at all.
-
-The DS18B20 on channel 3 sets a negative sign whenever it reads
-below zero, so this machinery is live rather than dormant. The two
-analogue channels do not use it yet, because readadc10 can only
-return 0 to 1023 and so never needs a sign. Give either of them a
-reason to be negative and it starts working immediately.
-
-THERE ARE FOUR SIGN BITS, AND THEY DO DIFFERENT JOBS
-This is the part to read carefully, because it is where a real bug
-lived until it was found by inspection.
-
-      sensor1Neg, sensor2Neg, sensor3Neg   STORED signs. One per
-                                           sensor, set when that
-                                           sensor is read.
-      isNegative                           the WORKING sign. It
-                                           describes the packet
-                                           being built right now.
-
-All three sensors are read ONCE, at the start of an interval. The
-calculator then asks for them one at a time - A, then B, then C -
-so three packets are built from one set of readings. When there was
-only ONE sign bit shared between them, sensor 3's minus sign was
-still set when sensor 1's packet went out, and a perfectly ordinary
-positive light reading arrived at the calculator as a negative
-number. No error appeared. It would never show in a warm room and
-would happen every time in an ice-water practical.
-
-So: set the STORED bit when you read the sensor, and let
-handle_receive copy it into isNegative when that sensor's turn
-comes. If you add a fourth sensor, give it its own stored bit.
-
-EXAMPLE: A NTC THERMISTOR THAT READS BELOW ZERO DEGREES
-Suppose your conversion produces a temperature in tenths of a
-degree, and it can fall below freezing. Work out the magnitude and
-the sign separately, then load them into the two variables:
-
-      readadc10 SENSOR1_PIN, tempWord
-      ; ...your conversion turns temp into tenths of a degree...
-      ; ...and you know from it whether the result was below zero...
-      sensor1Value = tempWord    ; magnitude only, always positive
-      sensor1Neg   = 1           ; ...or 0 for a reading above zero
-      return
-
-*** tempWord IS w13 IN THIS FILE. CHECK THE SYMBOL TABLE, DO NOT
-TRUST THIS NOTE***
-
-Note also that it is sensor1Neg that is set, NOT isNegative.
-isNegative is loaded from the stored bits in handle_receive and
-anything you write to it inside a read routine is discarded.
-
-EXAMPLE: CENTRING A SENSOR ON ZERO
-An LDR reads 0-1023 and is never negative. To make it read zero in
-average light and swing both ways:
-
-      readadc10 SENSOR1_PIN, tempWord
-      if tempWord >= 512 then
-        sensor1Value = tempWord - 512   ; brighter than average
-        sensor1Neg   = 0
-      else
-        sensor1Value = 512 - tempWord   ; dimmer: magnitude of the gap
-        sensor1Neg   = 1                ; ...and mark it negative
-      endif
-      return
-
-The calculator now plots a graph that crosses zero, which is usually
-far easier to read than one sitting up around 512.
-
-CALIBRATION TIPS
-- NEVER use boiling water for temperature calibration (it is NOT needed)
-- NEVER connect mains electricity (240 V / 110 V) to the calculator,
-   to this board, or to any sensor wiring. 
-- NEVER use mains-connected equipment near water.
-
-- Measure the real output range of your sensor before scaling it.
-- Choose the centring point so the swing is balanced either side.
-- Non-linear sensors - NTC thermistors especially - need a lookup
-  table or a piecewise fit, not a single multiply.
-  Alternative: use a Steinhart-Hart equation
-- Averaging several readings to reduce noise is already done for
-  you in this code.
-
 ==================
-CASIO FX_9750 CODE
+CASIO FX_9750 GIII CODE
 Casio BASIC companion program - universal
 works with Picaxe, Arduino, ESP32, ESP8266, BBC Micro:bit
 NOTE: edit in calculator: T*(I-1)->List 1[I] is T times (I-1),
@@ -1483,7 +1385,7 @@ If T>300
 Then Goto 1
 IfEnd
 ClrText
-Locate 1,1,"Receive "
+Locate 1,1,"Reading "
 Locate 9,1,N
 Locate 11,1," sensor(s)"
 Locate 1,2,"@ "
@@ -1494,33 +1396,110 @@ Locate 1,6,"Elapsed(s):  "
 Send(T)
 Lbl 2:
 Receive(A)
-I+1->I
-T*(I-1)->List 1[I]
-A->List 2[I]
-Locate 1,4,"A:               "
-Locate 4,4,A
-Locate 9,3,I
-Locate 13,6,A
 If N>1
 Then Receive(B)
-B->List 3[I]
-Locate 11,4,"B:"
-Locate 14,4,B
 Ifend
 If N>2
 Then Receive(C)
-C->List 4[I]
+Ifend
+I+1->I
+T*(I-1)->List 1[I]
+A->List 2[I]
+Locate 1,4,"A:        B:     "
+Locate 4,4,A
+Locate 9,3,I
+Locate 13,6,List 1[I]
+If N>1
+Then B->List 3[I]
+Locate 13,4,B
+Ifend
+If N>2
+Then C->List 4[I]
 Locate 1,5,"C:      "
 Locate 4,5,C
 Ifend
 If I>997
 Then ClrText
-Locate 1,1,"MAXIMUM LIMIT"
+Locate 1,1,"LIST FULL"
 Locate 1,2,""
 Locate 1,3,I
 Locate 4,3," samples recorded"
 Locate 1,4,""
-Locate 1,5,"Data in Lists 1-4"
+Locate 1,5,"Data in List(s)"
+Locate 1,7,"Press AC"
+Getkey
+Stop
+IfEnd
+Goto 2
+
+==================
+==================
+CASIO FX_9750G PLUS CODE
+
+255->Dim List 1
+255->Dim List 2
+255->Dim List 3
+255->Dim List 4
+0->I
+0->T
+ClrText
+Locate 1,1,"CONNECTING..."
+Receive(N)
+Lbl 1
+ClrText
+Locate 1,2,"SENSORS FOUND"
+Locate 16,2,N
+Locate 1,4,"Select interval"
+Locate 1,5,"1-300 seconds"
+?->T
+If T<1
+Then Goto 1
+IfEnd
+If T>300
+Then Goto 1
+IfEnd
+ClrText
+Locate 1,1,"Reading "
+Locate 9,1,N
+Locate 11,1," sensor(s)"
+Locate 1,2,"@ "
+Locate 3,2,T
+Locate 11,2,"AC=stop"
+Locate 1,3,"Sample: "
+Locate 1,6,"Elapsed(s):  "
+Send(T)
+Lbl 2:
+Receive(A)
+If N>1
+Then Receive(B)
+Ifend
+If N>2
+Then Receive(C)
+Ifend
+I+1->I
+T*(I-1)->List 1[I]
+A->List 2[I]
+Locate 1,4,"A:        B:     "
+Locate 4,4,A
+Locate 9,3,I
+Locate 13,6,List 1[I]
+If N>1
+Then B->List 3[I]
+Locate 13,4,B
+Ifend
+If N>2
+Then C->List 4[I]
+Locate 1,5,"C:      "
+Locate 4,5,C
+Ifend
+If I>254
+Then ClrText
+Locate 1,1,"LIST FULL"
+Locate 1,2,""
+Locate 1,3,I
+Locate 4,3," samples recorded"
+Locate 1,4,""
+Locate 1,5,"Data in List(s)"
 Locate 1,7,"Press AC"
 Getkey
 Stop

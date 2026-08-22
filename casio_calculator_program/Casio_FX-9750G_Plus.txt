@@ -1,0 +1,71 @@
+CASIO FX_9750G PLUS CODE
+
+255->Dim List 1
+255->Dim List 2
+255->Dim List 3
+255->Dim List 4
+0->I
+0->T
+ClrText
+Locate 1,1,"CONNECTING..."
+Receive(N)
+Lbl 1
+ClrText
+Locate 1,2,"SENSORS FOUND"
+Locate 16,2,N
+Locate 1,4,"Select interval"
+Locate 1,5,"1-300 seconds"
+?->T
+If T<1
+Then Goto 1
+IfEnd
+If T>300
+Then Goto 1
+IfEnd
+ClrText
+Locate 1,1,"Reading "
+Locate 9,1,N
+Locate 11,1," sensor(s)"
+Locate 1,2,"@ "
+Locate 3,2,T
+Locate 11,2,"AC=stop"
+Locate 1,3,"Sample: "
+Locate 1,6,"Elapsed(s):  "
+Send(T)
+Lbl 2:
+Receive(A)
+If N>1
+Then Receive(B)
+Ifend
+If N>2
+Then Receive(C)
+Ifend
+I+1->I
+T*(I-1)->List 1[I]
+A->List 2[I]
+Locate 1,4,"A:        B:     "
+Locate 4,4,A
+Locate 9,3,I
+Locate 13,6,List 1[I]
+If N>1
+Then B->List 3[I]
+Locate 13,4,B
+Ifend
+If N>2
+Then C->List 4[I]
+Locate 1,5,"C:      "
+Locate 4,5,C
+Ifend
+If I>254
+Then ClrText
+Locate 1,1,"LIST FULL"
+Locate 1,2,""
+Locate 1,3,I
+Locate 4,3," samples recorded"
+Locate 1,4,""
+Locate 1,5,"Data in List(s)"
+Locate 1,7,"Press AC"
+Getkey
+Stop
+IfEnd
+Goto 2

@@ -4,7 +4,7 @@ What is original in this project, what the evidence is, and what is deliberately
 
 This is the short public version. A formal, timestamped priority record exists separately:
 
-> Fenton, M. (2026). \*Casio Graphing Calculator Serial Interface: Priority Disclosure of Timing Discoveries, Encoding Invention, and Operational Modes (FX-9750 and FX-9860 Series).\* Zenodo. https://doi.org/10.5281/zenodo.19303911
+> Fenton, M. (2026). \\\*Casio Graphing Calculator Serial Interface: Priority Disclosure of Timing Discoveries, Encoding Invention, and Operational Modes (FX-9750 and FX-9860 Series).\\\* Zenodo. https://doi.org/10.5281/zenodo.19303911
 
 Throughout, **discovery** means a previously undocumented property of an existing system. **Invention** means a method or application that did not previously exist.
 
@@ -55,7 +55,7 @@ That turns a graphing calculator into a datalogger with no specialised hardware 
 |BBC micro:bit V1, V2|validated|validated|
 |Arduino Uno R3 (5 V)|**validated**|validated|
 
-Every build published here was compiled and run to a full interval logging session against an **FX-9750GIII** in 2026. The earlier 2007–2008 work ran on an **FX-9750G Plus**, which is where the two-generation claim comes from.
+Every build published here was compiled and run to a full interval logging session against an **FX-9750GIII** in 2026. The Picaxe multi-sensor data logging code for the Picaxe 08M2 and 14M2 also runs on the **FX-9750G Plus,** which is where the two-generation claim comes from.
 
 *Not tested on the FX-9860 series or the FX-CG50.* The FX-9750GIII and FX-9860GIII share one Casio firmware image, so the 9860GIII is expected to behave identically — but expected is not tested, and it is not claimed here.
 
@@ -93,7 +93,7 @@ All sensors are read together inside the host-wait window immediately before tha
 
 **The same decoder program, unchanged, decodes transmissions from every platform.**
 
-> \*\*The encoding algorithm, the field structure and the decoder are withheld pending peer-reviewed publication.\*\* They are not in this repository and are not in the priority disclosure. What is published here is the \*\*NSN\*\* method — one value per `RECEIVE()`, which needs no encoding at all.
+> \\\*\\\*The encoding algorithm, the field structure and the decoder are withheld pending peer-reviewed publication.\\\*\\\* They are not in this repository and are not in the priority disclosure. What is published here is the \\\*\\\*NSN\\\*\\\* method — one value per `RECEIVE()`, which needs no encoding at all.
 
 \---
 
@@ -103,7 +103,7 @@ There is a previously undocumented condition under which the FX-9750GIII's own n
 
 **This is a property of the calculator, not of anything in this project.** It constrains *anything* transmitted through that decoder near the limit of its precision, whether or not the person doing it has ever heard of this work.
 
-> \*\*The condition, the position affected, and the design rule derived from it are withheld\*\* pending peer-reviewed publication — for the same reason as the encoding itself. Stating them precisely would disclose structure of the withheld method. Both appear in the paper.
+> \\\*\\\*The condition, the position affected, and the design rule derived from it are withheld\\\*\\\* pending peer-reviewed publication — for the same reason as the encoding itself. Stating them precisely would disclose structure of the withheld method. Both appear in the paper.
 
 What can be said without enabling:
 
@@ -151,7 +151,7 @@ That combination — **automatic sensor acquisition, device-maintained elapsed t
 
 **On timestamps, and on what the released code is for.** The published code carries no clock — the calculator computes elapsed time as `interval × (reading number − 1)`. **That is not a gap to be fixed.** What is published is a proof of concept: the simplest thing that demonstrates the method and can be read end to end. It needs no modification to do what it was built for.
 
-Where a true clock time is wanted, there are two straightforward routes, both set out in `teaching\_resources/TEACHER-timing-guide.md`. An ESP board can join a network at startup, take **one** internet time check, set its clock and revert to serving its own access point — with the true time recorded in **its own List**, alongside rather than instead of elapsed time. Or a **GPS module supplies time and position together with no network at all**, which is the better answer for anything outdoors and is what a field survey would use.
+Where a true clock time is wanted, there are two straightforward routes, both set out in `teaching\\\_resources/TEACHER-timing-guide.md`. An ESP board can join a network at startup, take **one** internet time check, set its clock and revert to serving its own access point — with the true time recorded in **its own List**, alongside rather than instead of elapsed time. Or a **GPS module supplies time and position together with no network at all**, which is the better answer for anything outdoors and is what a field survey would use.
 
 **Why it is worth building.** A field survey is the case where the calculator being *in the student's bag already* stops being a cost argument and becomes a practical one. A logger that goes up a riverbank, records substrate at each station, and comes back with the data in Lists ready to graph is a different instrument from one never permitted to leave the classroom.
 
@@ -166,7 +166,8 @@ Naming the strongest thing found is what makes a prior-art statement worth readi
 * **Michael Fenton (2004–2008)** — adapted Grindheim's work after correspondence with Andrew Hornblow, and published PICAXE-to-Casio example code and protocol notes on the Revolution Education forum.
 * **Anobium (2011–2012)** and **nsg21 (2018)** — both worked from this project's published manual and code, both credited it, and neither claimed precedence. On 30 December 2011 Anobium wrote: *"most roads led to the Nexusresearch website. I have the Picaxe code from Micheal Fenton. The code does work… all of the Picaxe searching I did provided nothing except for Micheals good work."*
 
-  Anobium's logger uses a fixed delay before the END packet as its sampling interval. The delay excludes the transaction time, so the interval drifts, and with more than one sensor the error compounds across successive `RECEIVE()` requests — the condition that synchronous multi-sensor encoding exists to remove. 
+  Anobium's logger uses a fixed delay before the END packet as its sampling interval. The delay excludes the transaction time, so the interval drifts, and with more than one sensor the error compounds across successive `RECEIVE()` requests — the condition that synchronous multi-sensor encoding exists to remove.
+
 * **MiniExperimenter (shabaz123, 2020)** — the most technically sophisticated independent prior work identified. It uses the EA-200 hardware protocol at a different baud rate, does not address interval timing, and does not encode multiple sensors within a single transmission.
 
 The **diode used as an open-drain level translator** in the interface cable is standard practice in mixed-voltage interfacing and is **not** claimed as novel. What is claimed is its application to the Casio SB-62 interface, arrived at independently in 2007 without reference to that literature, and — on the evidence examined — the earliest known use of the configuration on this interface.
@@ -177,11 +178,11 @@ Casio's EA-100 and EA-200 data acquisition units are discontinued. The Casio New
 
 ## Citing this work
 
-> Fenton, M. (2026). \*Casio Graphing Calculator Serial Interface: Priority Disclosure.\* Zenodo. https://doi.org/10.5281/zenodo.19303911
+> Fenton, M. (2026). \\\*Casio Graphing Calculator Serial Interface: Priority Disclosure.\\\* Zenodo. https://doi.org/10.5281/zenodo.19303911
 
 Related publications:
 
-* Fenton, M. (2026). *Casio Protocol and Wiring Guide: Serial Communication, Wiring and Packet Structure for Microcontroller Data Logging and Control (Second Edition).* Zenodo. https://doi.org/10.5281/zenodo.22003135 — the technical manual for this repository: the wiring, the `RECEIVE()` sequence, every byte of every packet, and the classroom activities. **It is also in this repository**, identically, in [`serial_protocol_technical-manual/`](serial_protocol_technical-manual/RIGEL-Casio-Serial-Protocol-Technical-Manual.pdf) and [`teaching_resources/`](teaching_resources/RIGEL-Casio-Serial-Protocol-Technical-Manual.pdf). Cite the DOI, not the filename.
+* Fenton, M. (2026). *Casio Protocol and Wiring Guide: Serial Communication, Wiring and Packet Structure for Microcontroller Data Logging and Control (Second Edition).* Zenodo. https://doi.org/10.5281/zenodo.22003135 — the technical manual for this repository: the wiring, the `RECEIVE()` sequence, every byte of every packet, and the classroom activities. **It is also in this repository**, identically, in [`serial\_protocol\_technical-manual/`](serial_protocol_technical-manual/RIGEL-Casio-Serial-Protocol-Technical-Manual.pdf) and [`teaching\_resources/`](teaching_resources/RIGEL-Casio-Serial-Protocol-Technical-Manual.pdf). Cite the DOI, not the filename.
 * Fenton, M. (2008). *Connecting the PICAXE 08M and PICAXE 18X to the Casio 9750G Plus graphics calculator* and *RIGEL / CASIO Data logger manual.* Zenodo. https://doi.org/10.5281/zenodo.22004530 — the first edition, deposited unaltered with its original 2008 file properties. The interface circuit it describes is unchanged in the second edition.
 * Fenton, M. (2008). *Authentic Learning Using Mobile Sensor Technology.* New Zealand Ministry of Education E-Learning Fellowship report. Zenodo. https://doi.org/10.5281/zenodo.19302276
 * Fenton, M. (2009). *RIGEL — Learning From Life: Communities of Learning via a Connected Curriculum.* Microsoft Partners in Learning Regional Innovative Teachers Conference, Kuala Lumpur. Zenodo. https://doi.org/10.5281/zenodo.19334228
