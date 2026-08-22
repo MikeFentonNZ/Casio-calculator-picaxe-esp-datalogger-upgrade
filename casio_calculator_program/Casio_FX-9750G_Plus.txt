@@ -1,4 +1,20 @@
-CASIO FX_9750G PLUS CODE
+ Casio BASIC code for Casio-NSN-08M2.bas & Casio-NSN-14M2.bas
+ This code runs on FX-9750G Plus
+ (C) Michael Fenton, MRSNZ, 2026
+ Licence: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International 
+ (CC BY-NC-SA 4.0)
+ 
+ The calculator as a data logger.
+
+ Two RECEIVE() windows (GAP 1 and GAP 2 in code below) discovered 2007/2008
+ using Picaxe 18X connected to a Casio FX-9750G Plus. See the author's
+ New Zealand Ministry of Education E-Learning Fellowship report and 
+ conference paper; 
+
+ 1) Authentic Learning Using Mobile Sensor Technology (2008): https://doi.org/10.5281/zenodo.19302276
+ 2) RIGEL - Learning From Life, Kuala Lumpur (2009): https://doi.org/10.5281/zenodo.19334228
+
+ https://mikefentonnz.github.io/projects/casio-calculator-data-logger-hack.html
 
 255->Dim List 1
 255->Dim List 2

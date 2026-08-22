@@ -1,4 +1,5 @@
- Casio-NSN-multisensor-08M2.bas
+ Casio BASIC code for Casio-NSN-08M2.bas & Casio-NSN-14M2.bas
+ This code runs on FX-9750GIII
  (C) Michael Fenton, MRSNZ, 2026
  Licence: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International 
  (CC BY-NC-SA 4.0)
@@ -54,7 +55,7 @@ If T>300
 Then Goto 1
 IfEnd
 ClrText
-Locate 1,1,"Receive "
+Locate 1,1,"Reading "
 Locate 9,1,N
 Locate 11,1," sensor(s)"
 Locate 1,2,"@ "
@@ -65,33 +66,36 @@ Locate 1,6,"Elapsed(s):  "
 Send(T)
 Lbl 2:
 Receive(A)
-I+1->I
-T*(I-1)->List 1[I]
-A->List 2[I]
-Locate 1,4,"A:               "
-Locate 4,4,A
-Locate 9,3,I
-Locate 13,6,A
 If N>1
 Then Receive(B)
-B->List 3[I]
-Locate 11,4,"B:"
-Locate 14,4,B
 Ifend
 If N>2
 Then Receive(C)
-C->List 4[I]
+Ifend
+I+1->I
+T*(I-1)->List 1[I]
+A->List 2[I]
+Locate 1,4,"A:        B:     "
+Locate 4,4,A
+Locate 9,3,I
+Locate 13,6,List 1[I]
+If N>1
+Then B->List 3[I]
+Locate 13,4,B
+Ifend
+If N>2
+Then C->List 4[I]
 Locate 1,5,"C:      "
 Locate 4,5,C
 Ifend
 If I>997
 Then ClrText
-Locate 1,1,"MAXIMUM LIMIT"
+Locate 1,1,"LIST FULL"
 Locate 1,2,""
 Locate 1,3,I
 Locate 4,3," samples recorded"
 Locate 1,4,""
-Locate 1,5,"Data in Lists 1-4"
+Locate 1,5,"Data in List(s)"
 Locate 1,7,"Press AC"
 Getkey
 Stop
