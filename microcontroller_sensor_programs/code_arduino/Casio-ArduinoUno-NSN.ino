@@ -1,11 +1,12 @@
-/* ===========================================================
-  CASIO FX-9750 <-> Arduino Uno R3 5V
-  Normalised scientific notation packets (NSN) DEMONSTRATION
+/*
+ ===================================================================
+  CASIO FX-9750 <-> ARDUINO UNO R3   NSN DATALOGGER
+  Normalised scientific notation - ONE value per Receive(, SIGNED.
 
  (C) Michael Fenton, MRSNZ, 2026
  Licence: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International 
  (CC BY-NC-SA 4.0)
- 
+
  Two RECEIVE() windows (GAP 1 and GAP 2) discovered 2007/2008
  using Picaxe 18X connected to a Casio FX-9750G Plus. See the author's
  New Zealand Ministry of Education E-Learning Fellowship report and 
@@ -15,22 +16,21 @@
  2) RIGEL - Learning From Life, Kuala Lumpur (2009): https://doi.org/10.5281/zenodo.19334228
 
  https://mikefentonnz.github.io/projects/casio-calculator-data-logger-hack.html
-
  ================================================================= 
  Version 1.0; 03/03/2026
  (Update of Picaxe 2.0 rework 10/10/2025,
   original version 1.0 code for Picaxe 18X invented 2007)
 
  Ported from Casio-NSN-14M2.bas (PICAXE 14M2), which was
- bench-validated in 2025 / 2026 with 0% packet failure.
+ bench-validated in 2025 / reconfirmed 2026 with 0% packet failure.
 
   *** STATUS: PROOF OF CONCEPT - A FOUNDATION TO BUILD ON ***
  This is a reference implementation based on a validated method.
  It is deliberately minimal so that every line can be read and
  understood. It is NOT a finished classroom product and will not
- suit every use case. MODIFICATION IS EXPECTED. 
- For example,  up to 3 sensors, read synchronously but delivered 
- as consecutive seperate RECEIVE() values
+ suit every use case. MODIFICATION IS EXPECTED.
+
+ The Uno is the fifth validated platform.
 
  ===================================================================
   THE UNO HAS ONE HARDWARE UART AND THE USB PORT IS USING IT
@@ -83,12 +83,6 @@
 
   *** THIS IS A LOADED GUN AND IT IS POINTED AT YOUR DATA. ***
 
-  On 17 August 2026 a file in this project was found with a test ramp
-  left in place of the sensor read: physicalValue[0] + 7, wrapping at
-  1020. It produced a beautiful sawtooth that a student would have
-  plotted without a moment's suspicion. It had been there long enough
-  to be used as the reference template for three other builds.
-
   So the simulation here is deliberately made HARD TO SHIP BY ACCIDENT:
 
     - it is a compile-time switch, not a runtime one
@@ -99,10 +93,33 @@
     - the waveform is a triangle that visibly reverses, not a ramp
       that could pass for a cooling curve or a rising temperature
 
-  A fault must never resemble a result. Simulated data is a fault by
-  definition: it is the absence of a measurement.
-
   *** TURN IT OFF BEFORE ANY REAL RUN. ***
+===================================================================
+  Consecutive RECEIVE() requests 
+ ===================================================================
+  Each sensor is sent as its OWN value, in its own Receive(
+  transaction, in normalised scientific notation. The calculator
+  stores what arrives straight into a List:
+
+      Receive(N)   how many sensors    -> N
+      Send(T)      the interval        -> T
+      Receive(A)   sensor 1            -> List 2
+      Receive(B)   sensor 2            -> List 3   (only if N > 1)
+      Receive(C)   sensor 3            -> List 4   (only if N > 2)
+
+  SIGNED VALUES ARE NATIVE. Byte 14 of the value packet is the
+  sign/info byte: bit 0 says the magnitude is >= 1, and bits 6 and 4
+  together say NEGATIVE. So -12.5 travels as a negative number and
+  arrives as one. 
+
+  A fourth RECEIVE(D) could act as a diagnosttic status indicator
+
+  If a DS18B20 is not connected a 0 reading may be a fault or
+  mistaken for a genuine zero degress.
+  The Picaxe BASIC code checked the one-wire serial number to detect
+  if a DS18B20 was disconnected if configuration code said it was present.
+
+  Not enables here yet...
 
  ===================================================================
   HARDWARE  -  wire colours user choice
@@ -153,36 +170,6 @@
   to this board, or to any sensor wiring. NEVER use mains-connected
   equipment near water. Keep every sensor input within 0 V and +5 V.
 
- ===================================================================
-  A FAULT MUST NEVER RESEMBLE A RESULT
- ===================================================================
-    centred ADC        an unconnected pin reads a clearly wrong
-                       number, not a plausible zero.
-    clamp_to_range()   a reading beyond the packet's range is clamped
-                       AND recorded in saturatedMask.
-    SIMULATE_SENSORS   announces itself in the banner and on the LED.
-    the counters       every fault found in this project in August
-                       2026 was found by arithmetic on numbers like
-                       these. Add one for anything you add.
-
-  NSN HAS NO STATUS FIELD, so none of the above can be signalled to
-  the calculator in-band. They appear on the USB monitor. Say so in
-  the worksheet.
-
- ===================================================================
-  THE CASIO PROGRAM
- ===================================================================
-      Receive(N)   how many sensors    -> N
-      Send(T)      the interval        -> T
-      Receive(A)   sensor 1            -> List 2
-      Receive(B)   sensor 2            -> List 3   (only if N > 1)
-      Receive(C)   sensor 3            -> List 4   (only if N > 2)
-
-  SIGNED VALUES ARE NATIVE. Byte 14 of the value packet is the
-  sign/info byte: bit 0 says the magnitude is >= 1, and bits 6 and 4
-  together say NEGATIVE. NO OFFSET IS APPLIED ANYWHERE, and the Casio
-  program stores what arrives with no processing.
- ===================================================================
 */
 
 #include <Arduino.h>
@@ -819,6 +806,7 @@ void loop() {
   // than the packet's shape trusted. A read that has slipped by one
   // byte fails that checksum, which catches a desynchronisation when
   // it happens rather than several steps later.
+
   uint8_t rxBuf[REQUEST_PACKET_LEN];
   uint8_t got = read_block(rxBuf, REQUEST_PACKET_LEN, 2000);
 
