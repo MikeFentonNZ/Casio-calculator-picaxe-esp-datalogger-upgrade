@@ -1,12 +1,12 @@
 /*
- ===========================================================
+ ===================================================================
   CASIO FX-9750 <-> BBC micro:bit V1   NSN DATALOGGER
-  Normalised scientific notation packets (NSN) DEMONSTRATION
+  Normalised scientific notation - ONE value per Receive(, SIGNED.
 
  (C) Michael Fenton, MRSNZ, 2026
  Licence: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International 
- (CC BY-NC-SA 4.0)
- 
+ (CC BY-NC-SA 4.0)  
+
  Two RECEIVE() windows (GAP 1 and GAP 2) discovered 2007/2008
  using Picaxe 18X connected to a Casio FX-9750G Plus. See the author's
  New Zealand Ministry of Education E-Learning Fellowship report and 
@@ -16,20 +16,19 @@
  2) RIGEL - Learning From Life, Kuala Lumpur (2009): https://doi.org/10.5281/zenodo.19334228
 
  https://mikefentonnz.github.io/projects/casio-calculator-data-logger-hack.html
-
  ================================================================= 
  Version 1.0; 03/03/2026
  (Update of Picaxe 2.0 rework 10/10/2025,
   original version 1.0 code for Picaxe 18X invented 2007)
 
  Ported from Casio-NSN-14M2.bas (PICAXE 14M2), which was
- bench-validated in 2025 / 2026 with 0% packet failure.
+ bench-validated in 2025 / reconfirmed 2026 with 0% packet failure.
 
   *** STATUS: PROOF OF CONCEPT - A FOUNDATION TO BUILD ON ***
  This is a reference implementation based on a validated method.
  It is deliberately minimal so that every line can be read and
  understood. It is NOT a finished classroom product and will not
- suit every use case. MODIFICATION IS EXPECTED. 
+ suit every use case. MODIFICATION IS EXPECTED.
 
  ===================================================================
   THE SENSORS  -  THREE IMPLEMENTED, FIVE POSSIBLE
@@ -41,15 +40,21 @@
   *** ALL THREE SENSORS ARE INSIDE THE BOARD. NO EDGE PIN IS USED
       BY ANY OF THEM. ***
 
-  That is worth saying plainly, because it is something the micro:bit
-  can do and no other platform in this project can. A PICAXE, an
-  ESP8266 or an ESP32 has to have something wired to it before it can
-  measure anything at all. This board logs three real quantities out
-  of the box, with a cable and nothing else - and P0, P1 and P2 stay
-  FREE for external sensors the learner builds.
+  Two of the three are INSIDE THE BOARD, which is something the
+  micro:bit can do and no other platform in this project can. A
+  PICAXE, an ESP8266 or an ESP32 must have something wired to it
+  before it can measure anything at all.
+  
+  This board logs three real quantities out
+  of the box, with a cable and nothing else.
 
-  So a first lesson needs no breadboard, no components and no
-  soldering. The external pins are the NEXT lesson, not the entry fee.
+  Tilting the board drives the accelerometer from about -1000 to
+  +1000 milli-g, which is a five-second test of the whole signed path
+  and the quickest one in the project.
+
+
+  P0, P1 and P2 stay FREE for external sensors the learner builds.
+. This file starts no display driver. 
 
   FIVE IS THE MAXIMUM this board will carry, not three:
       sensor 4 = external ADC  A0 = edge pin P0
@@ -60,11 +65,11 @@
   request D and E, which the released NSN-LOGR does not.
 
  ===================================================================
-  NSN, AND WHAT IT DOES NOT CARRY
+  Consecutive RECEIVE() requests 
  ===================================================================
   Each sensor is sent as its OWN value, in its own Receive(
   transaction, in normalised scientific notation. The calculator
-  stores what arrives straight into a List with no processing:
+  stores what arrives straight into a List:
 
       Receive(N)   how many sensors    -> N
       Send(T)      the interval        -> T
@@ -75,41 +80,16 @@
   SIGNED VALUES ARE NATIVE. Byte 14 of the value packet is the
   sign/info byte: bit 0 says the magnitude is >= 1, and bits 6 and 4
   together say NEGATIVE. So -12.5 travels as a negative number and
-  arrives as one. NO OFFSET IS USED OR NEEDED ANYWHERE IN THIS BUILD.
+  arrives as one. 
 
-  *** WHAT NSN DOES NOT HAVE: A STATUS FIELD. ***
-  There is nowhere in a plain value packet to put a fault code. This
-  matters, and a worksheet should say so:
+  A fourth RECEIVE(D) could act as a diagnosttic status indicator
 
-    - A missing accelerometer returns 0, and 0 is a legal reading.
-    - A clamped sensor reports its clamped value and nothing else.
+  If a DS18B20 is not connected a 0 reading may be a fault or
+  mistaken for a genuine zero degress.
+  The Picaxe BASIC code checked the one-wire serial number to detect
+  if a DS18B20 was disconnected if configuration code said it was present.
 
-  The saturation mask below is still maintained, and DIAG_CHANNEL3
-  can put any counter on channel 3 so the calculator displays it. That
-  is the substitute, and it is a deliberate one: with three separate
-  values there is no spare field, so a fault has to be shown by
-  spending a CHANNEL rather than by hiding a code inside a number.
-
- ===================================================================
-  WHY THIS PORT IS POSSIBLE AT ALL
- ===================================================================
-  The nRF51822 has ONE UART, and its CONFIG register offers parity
-  and flow control and nothing else. There is no stop-bit field.
-  *** THIS CHIP TRANSMITS ONE STOP BIT AND CANNOT BE TOLD OTHERWISE.
-
-  Until 5 August 2026 this project believed the calculator required
-  two stop bits. That claim had never been tested; it was withdrawn
-  for lack of evidence, tested on a micro:bit V2, and found false -
-  the calculator accepts one, exactly as Grindheim reported in 2001.
-
-  Had the old belief held, this board could only have been driven by
-  bit-banging: on a 16 MHz Cortex-M0, with a display driver competing
-  for interrupts. That is the arrangement that failed on the ESP8266.
-
-  So a claim withdrawn on Tuesday and tested on Thursday decides on
-  Friday whether a cupboard full of older classroom hardware can be
-  used at all. Worth remembering the next time an untested assertion
-  looks harmless.
+  Not enables here yet...
 
  ===================================================================
   THE USB SERIAL MONITOR IS LOST, AND THAT IS MANAGEABLE
@@ -129,12 +109,11 @@
      through the instrument it is attached to needs no laptop.
 
  ===================================================================
-  TWO THINGS THIS OLD BOARD DOES BETTER
+  TWO THINGS THIS OLD V1 BOARD DOES BETTER
  ===================================================================
   EXPLICIT UART ERROR REPORTING. The nRF51's ERRORSRC register flags
   overrun, framing, parity and break. The nRF52's UARTE hides these
-  behind DMA. This board can COUNT a corrupted byte rather than infer
-  one - a better diagnostic than any other platform here has.
+  behind DMA. This board can COUNT a corrupted byte.
 
   TWO POSSIBLE ACCELEROMETERS, DETECTED RATHER THAN ASSUMED. V1.3
   carries an MMA8653 at 0x1D; V1.5 carries an LSM303AGR at 0x19. The
@@ -165,9 +144,8 @@
   logs junk until the calculator wakes its port. The pull-up supplies
   the idle state the calculator does not.
 
-  P8 and P12 are shared with nothing on either board revision.
-  P0, P1, P2 are LED matrix columns but nothing drives the matrix in
-  the Arduino IDE, so they serve as analogue inputs here.
+  P8 and P12 are ordinary GPIO, shared with nothing: not the LED
+  matrix, not the buttons, not the internal I2C.
 
  ===================================================================
   WARNING
@@ -175,24 +153,6 @@
   NEVER connect mains electricity (240 V / 110 V) to the calculator,
   to this board, or to any sensor wiring. NEVER use mains-connected
   equipment near water. Keep sensor inputs within 0 V to 3.3 V.
-
- ===================================================================
-  A FAULT MUST NEVER RESEMBLE A RESULT
- ===================================================================
-  Where a failure cannot be prevented it must be made visible. A
-  logger that stops is a nuisance; one that carries on and quietly
-  returns plausible numbers is worse than no logger at all.
-
-    clamp_to_range()   a reading beyond the range is clamped, and
-                       every clamp is recorded in saturatedMask.
-    DIAG_CHANNEL3      spends a whole channel to show a counter,
-                       because NSN has no spare field for one.
-    the counters       every fault found in August 2026 was found by
-                       arithmetic on them.
-
-  READ THE NSN SECTION ABOVE. Without a status field, an absent
-  sensor reads 0 and 0 is legal. That is the honest limitation of
-  this build and it must be taught, not hidden.
 
  ===================================================================
   THE SWITCHES
@@ -305,19 +265,11 @@ const uint8_t SIGN_NEGATIVE = 0x51;
 // ===================================================================
 // THE SHORTEST AND LONGEST INTERVAL THIS BOARD WILL ACCEPT
 // ===================================================================
-// MIN_INTERVAL_S WAS 2 UNTIL 7 AUGUST 2026. It is now 1.
 //
 // One Receive() transaction moves about 165 bytes. At 9600 baud that
 // is ABOUT 180 ms, and it is 180 ms on every platform in this project
 // - the wire does not care what is driving it. The device is not what
-// decides whether a 1-second interval holds. THE CALCULATOR IS: its
-// BASIC program must take each value in, write it to a list and
-// refresh the display between one request and the next, and that has
-// never been timed.
-//
-// *** NSN COSTS MORE TIME THAN A PACKED FRAME. *** Three sensors mean
-// THREE complete Receive( transactions per sample, not one. Budget
-// roughly three times the link time before choosing a short interval.
+// decides whether a 1-second interval holds.
 //
 // IF THE CALCULATOR CANNOT KEEP UP, NOTHING CORRUPTS. This board sets
 // the pace by holding the calculator inside the host-wait window. A
@@ -329,6 +281,13 @@ const uint8_t SIGN_NEGATIVE = 0x51;
 #define MIN_INTERVAL_S 1
 #define MAX_INTERVAL_S 300
 
+// ===================================================================
+// LINK COUNTERS
+//
+// Every fault found on the ESP builds was found by
+// ARITHMETIC ON THESE NUMBERS, not by reading code. If you add
+// anything to this firmware, add a counter for it.
+// ===================================================================
 struct LinkStats {
   uint32_t valuePackets;
   uint32_t endPackets;
@@ -682,7 +641,7 @@ int16_t scale_to_physical_5() {
 // ===================================================================
 // CLAMP
 // A reading beyond what the packet can carry is clamped, and the
-// clamp is recorded. NSN has no status field to report it in, so
+// clamp is recorded.
 // saturatedMask exists for DIAG_CHANNEL3 and for anyone extending
 // this build.
 // ===================================================================
@@ -835,11 +794,12 @@ void handle_receive(uint8_t vname) {
                         flush_line(); return; }
 
   // == HOST-WAIT WINDOW: THE VALUE WINDOW (GAP 3) ==
-  // The calculator waits here without the COM ERROR every reference
-  // says should follow. 300 s is the SPECIFIED limit, not the
-  // observed one: three hours has been reached and no ceiling has
-  // been established. The shorter maxima once reported were measured
-  // on unchanged calculator cells and were withdrawn 7 August 2026.
+  // The heart of it. The calculator is inside Receive() waiting for a
+  // number and it will wait - for five minutes if asked - without the
+  // COM ERROR every reference says should follow.
+  //
+  // 300 s is the SPECIFIED limit, not the observed one. Three hours
+  // has been reached and NO CEILING HAS BEEN ESTABLISHED. 
   //
   // *** THE INTERVAL WAIT BELONGS TO CHANNEL A ONLY. ***
   // A, B and C are three transactions within ONE sample. Waiting in
@@ -848,6 +808,7 @@ void handle_receive(uint8_t vname) {
   // failure this project refuses. A is the sample boundary; the
   // sensors are all read together inside wait_for_interval(), so B
   // and C return values already taken at the same instant as A.
+
   if (vname == VNAME_N) {
     send_nsn_value((int16_t)SENSOR_COUNT);
   } else if (vname == VNAME_A) {
@@ -865,6 +826,9 @@ void handle_receive(uint8_t vname) {
   send_end_packet();
 }
 
+// ===================================================================
+// THE CALCULATOR IS SENDING US A NUMBER  -  Send(T)
+// ===================================================================
 void handle_incoming() {
   uart_write_byte(CASIO_ACK);
 
@@ -947,9 +911,12 @@ void setup() {
 
 // ===================================================================
 // MAIN LOOP
-// Nothing happens until the calculator says something.
+// Nothing happens until the calculator says something. The whole
+// program is a reply to a question.
 // ===================================================================
 void loop() {
+  unsigned long now = millis();
+
   if (!uart_byte_waiting()) { delay(1); return; }
 
   uint8_t inByte;
@@ -965,11 +932,19 @@ void loop() {
 
   uart_write_byte(DEVICE_PRESENT);
 
-  // Read the WHOLE 50-byte request and check it. A packet that is not
+  // ===============================================================
+  // READ THE WHOLE 50-BYTE REQUEST PACKET, THEN CHECK IT
+  //
+  // The packet is 50 bytes, so read 50 bytes. A packet that is not
   // complete is never acted upon, and having all of it means the
-  // calculator's own checksum can be verified rather than the
-  // packet's shape trusted. A read that has slipped by one byte fails
-  // that checksum.
+  // calculator's own checksum can be verified instead of the packet's
+  // shape being trusted. A read that has slipped by one byte fails
+  // that checksum, which catches a desynchronisation when it happens
+  // rather than several steps later as a byte where an ACK belonged.
+  //
+  // On this board the hardware does the reading. One operation.
+  // ===============================================================
+
   uint8_t rxBuf[REQUEST_PACKET_LEN];
   uint16_t got = uart_read(rxBuf, REQUEST_PACKET_LEN, 2000);
 
@@ -985,4 +960,5 @@ void loop() {
 
   if      (command == CMD_RECEIVE) handle_receive(vname);
   else if (command == CMD_SEND)    handle_incoming();
+
 }

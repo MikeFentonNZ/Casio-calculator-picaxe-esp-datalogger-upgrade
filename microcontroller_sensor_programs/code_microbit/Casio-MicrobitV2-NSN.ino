@@ -1,7 +1,7 @@
 /*
  ===========================================================
   CASIO FX-9750 <-> BBC micro:bit V2   NSN DATALOGGER
-  Normalised scientific notation packets (NSN) DEMONSTRATION
+  Normalised scientific notation - ONE value per Receive(, SIGNED.
 
  (C) Michael Fenton, MRSNZ, 2026
  Licence: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International 
@@ -16,14 +16,13 @@
  2) RIGEL - Learning From Life, Kuala Lumpur (2009): https://doi.org/10.5281/zenodo.19334228
 
  https://mikefentonnz.github.io/projects/casio-calculator-data-logger-hack.html
-
  ================================================================= 
  Version 1.0; 03/03/2026
  (Update of Picaxe 2.0 rework 10/10/2025,
   original version 1.0 code for Picaxe 18X invented 2007)
 
  Ported from Casio-NSN-14M2.bas (PICAXE 14M2), which was
- bench-validated in 2025 / 2026 with 0% packet failure.
+ bench-validated in 2025 / reconfirmed 2026 with 0% packet failure.
 
   *** STATUS: PROOF OF CONCEPT - A FOUNDATION TO BUILD ON ***
  This is a reference implementation based on a validated method.
@@ -46,19 +45,22 @@
   So a first lesson can run with a cable and nothing else: set
   SENSOR_COUNT to 1 for die temperature alone, or leave P0
   unconnected and watch channel 2 sit at its centred value while the
-  other two do real work. The external pin is the NEXT lesson, not
-  the entry fee.
+  other two do real work. 
 
-  P0, P1 and P2 are LED matrix columns, but nothing drives the matrix
-  in the Arduino IDE unless a library is asked to, so they serve as
-  analogue inputs here. This file starts no display driver.
+  Tilting the board drives the accelerometer from about -1000 to
+  +1000 milli-g, which is a five-second test of the whole signed path
+  and the quickest one in the project.
+
+
+  P0, P1 and P2 stay FREE for external sensors the learner builds.
+. This file starts no display driver.
 
  ===================================================================
-  NSN, AND WHAT IT DOES NOT CARRY
+  Consecutive RECEIVE() requests 
  ===================================================================
   Each sensor is sent as its OWN value, in its own Receive(
   transaction, in normalised scientific notation. The calculator
-  stores what arrives straight into a List with no processing:
+  stores what arrives straight into a List:
 
       Receive(N)   how many sensors    -> N
       Send(T)      the interval        -> T
@@ -69,46 +71,19 @@
   SIGNED VALUES ARE NATIVE. Byte 14 of the value packet is the
   sign/info byte: bit 0 says the magnitude is >= 1, and bits 6 and 4
   together say NEGATIVE. So -12.5 travels as a negative number and
-  arrives as one. NO OFFSET IS USED OR NEEDED ANYWHERE IN THIS BUILD,
-  and no Casio program reading this logger has to subtract anything.
+  arrives as one. 
 
-  Tilting the board drives the accelerometer from about -1000 to
-  +1000 milli-g, which is a five-second test of the whole signed path
-  and the quickest one in the project.
+  A fourth RECEIVE(D) could act as a diagnosttic status indicator
 
-  *** WHAT NSN DOES NOT HAVE: A STATUS FIELD. ***
-  There is nowhere in a plain value packet to put a fault code. This
-  matters, and a worksheet should say so:
+  If a DS18B20 is not connected a 0 reading may be a fault or
+  mistaken for a genuine zero degress.
+  The Picaxe BASIC code checked the one-wire serial number to detect
+  if a DS18B20 was disconnected if configuration code said it was present.
 
-    - A missing accelerometer returns 0, and 0 is a legal reading.
-    - A clamped sensor reports its clamped value and nothing else.
-
-  The saturation mask below is still maintained, and DIAG_CHANNEL3
-  can put any counter on channel 3 so the calculator displays it.
-  That is the substitute, and it is a deliberate one: with three
-  separate values there is no spare field, so a fault has to be shown
-  by spending a CHANNEL rather than by hiding a code inside a number.
+  Not enables here yet...
 
   THIS BOARD ALSO KEEPS ITS USB SERIAL MONITOR, which the V1 and the
   PICAXE do not. DEBUG_TRACE is the other place a fault will show.
-
- ===================================================================
-  A QUESTION THIS BOARD SETTLED
- ===================================================================
-  THE CALCULATOR ACCEPTS ONE STOP BIT. IT DOES NOT REQUIRE TWO.
-
-  Both settings were tested here and both work. That confirms
-  Grindheim (2001), who reported the link is asymmetric - two stop
-  bits FROM the calculator, one TO it - and it finally disposes of a
-  claim this project made for years without testing: that the
-  calculator "insists on two; one is not accepted".
-
-  That claim was withdrawn in August 2026 for lack of evidence. There
-  is now evidence, and it is his.
-
-  WHY TWO ALSO WORKS: an extra stop bit is only extra idle line. The
-  receiver has already sampled the byte and is waiting for the next
-  start bit, which simply arrives a fraction later.
 
  ===================================================================
   THE SECOND UART, AND WHY THIS FILE EXISTS IN THIS FORM
@@ -164,37 +139,7 @@
  ===================================================================
   NEVER connect mains electricity (240 V / 110 V) to the calculator,
   to this board, or to any sensor wiring. NEVER use mains-connected
-  equipment near water.
-
-  The micro:bit is a 3.3 V device. Keep sensor inputs within 0 V to
-  3.3 V.
-
- ===================================================================
-  THE DESIGN PRINCIPLE THIS FILE IS BUILT ON
- ===================================================================
-  A FAULT MUST NEVER RESEMBLE A RESULT.
-
-  Where a failure cannot be prevented it must be made visible. A
-  logger that stops is a nuisance; a logger that carries on and
-  quietly returns plausible numbers is worse than no logger at all.
-
-  A student should be able to watch the phenomenon and FORGET what is
-  doing the recording. An instrument can only be forgotten if, when
-  it fails, this is apparent. Trust that has to be checked is not
-  trust.
-
-    clamp_to_range()   a reading beyond range is clamped, and every
-                       clamp is recorded in saturatedMask.
-    DIAG_CHANNEL3      spends a whole channel to show a counter,
-                       because NSN has no spare field for one.
-    centred ADC        an unconnected pin reads a clearly wrong
-                       number rather than a plausible zero.
-    the counters       every fault found in August 2026 was found by
-                       arithmetic on them, not by reading code.
-
-  READ THE NSN SECTION ABOVE. Without a status field, an absent
-  sensor reads 0 and 0 is legal. That is the honest limitation of
-  this build and it must be taught, not hidden.
+  equipment near water. Keep sensor inputs within 0 V to 3.3 V.
 
  ===================================================================
   THE SWITCHES, IN ONE PLACE
@@ -347,19 +292,11 @@ static bool    idleArmed = false;
 // ===================================================================
 // THE SHORTEST AND LONGEST INTERVAL THIS BOARD WILL ACCEPT
 // ===================================================================
-// MIN_INTERVAL_S WAS 2 UNTIL 7 AUGUST 2026. It is now 1.
 //
 // One Receive() transaction moves about 165 bytes. At 9600 baud that
 // is ABOUT 180 ms, and it is 180 ms on every platform in this project
 // - the wire does not care what is driving it. The device is not what
-// decides whether a 1-second interval holds. THE CALCULATOR IS: its
-// BASIC program must take each value in, write it to a list and
-// refresh the display between one request and the next, and that has
-// never been timed.
-//
-// *** NSN COSTS MORE TIME THAN A PACKED FRAME. *** Three sensors mean
-// THREE complete Receive( transactions per sample, not one. Budget
-// roughly three times the link time before choosing a short interval.
+// decides whether a 1-second interval holds.
 //
 // IF THE CALCULATOR CANNOT KEEP UP, NOTHING CORRUPTS. This board sets
 // the pace by holding the calculator inside the host-wait window. A
@@ -374,7 +311,7 @@ static bool    idleArmed = false;
 // ===================================================================
 // LINK COUNTERS
 //
-// Every fault found on the ESP builds in August 2026 was found by
+// Every fault found on the ESP builds was found by
 // ARITHMETIC ON THESE NUMBERS, not by reading code. If you add
 // anything to this firmware, add a counter for it.
 // ===================================================================
@@ -407,8 +344,7 @@ uint8_t  saturatedMask = 0;
 // The sensor read is fast on this board - the temperature peripheral
 // settles in well under a millisecond and analogRead is microseconds.
 // There is no slow 1-Wire conversion to schedule around, so the
-// read-ahead can be short. Compare the ESP builds, where a DS18B20
-// forced a 244 ms budget.
+// read-ahead can be short.
 const uint32_t SENSOR_READ_OFFSET_MS = 20;
 
 // ===================================================================
@@ -547,7 +483,7 @@ uint8_t calculate_checksum(const uint8_t *packet) {
 #if USE_ACCELEROMETER
 
 // ===================================================================
-// THE INTERNAL I2C BUS  -  found by scanning, 5 August 2026
+// THE INTERNAL I2C BUS  -  found by scanning
 //
 // The micro:bit V2 has TWO I2C buses. The motion sensors sit on an
 // INTERNAL one that is not brought out to the edge connector; P19 and
@@ -736,8 +672,7 @@ int16_t accel_x_milli_g() {
 //
 // Return TENTHS of your unit, so one decimal place survives with no
 // decimals in the packet: 23.4 degrees -> 234. Values may be
-// NEGATIVE - NSN carries the sign, so there is nothing to add or
-// subtract here.
+// NEGATIVE - NSN carries the sign.
 // ===================================================================
 
 // ---- Channel 1: the nRF52833's own temperature sensor -------------
@@ -751,6 +686,7 @@ int16_t accel_x_milli_g() {
 // pipeline and for showing a TREND. It is a good illustration of the
 // accuracy-versus-precision point: the quarter-degree steps are
 // precision the instrument has not earned.
+
 int16_t scale_to_physical_1() {
   NRF_TEMP->TASKS_START = 1;
   uint32_t t0 = millis();
@@ -780,10 +716,6 @@ int16_t scale_to_physical_2() {
 // do. It is still worth having, for two reasons: a logging run may be
 // nowhere near a laptop, and a counter nobody can read is no better
 // than no counter.
-//
-// UNDER NSN IT MATTERS MORE. There is no status field in a value
-// packet, so this channel is the only in-band way the board can tell
-// the calculator about itself while it is running.
 //
 //   0 = normal. Channel 3 is the accelerometer or the ADC.
 //   1 = accelerometer found (1) or not (0)
@@ -1017,13 +949,7 @@ void handle_receive(uint8_t vname) {
   // COM ERROR every reference says should follow.
   //
   // 300 s is the SPECIFIED limit, not the observed one. Three hours
-  // has been reached and NO CEILING HAS BEEN ESTABLISHED. Shorter
-  // maxima recorded afterwards - around an hour - were long read as
-  // the protocol behaving inconsistently, and were withdrawn on
-  // 7 August 2026: the calculator's cells had never been changed
-  // after the three-hour run, and a falling supply ends a session
-  // with a Com ERROR and no warning at all. 300 s is a chosen margin.
-  // A successful long pause still does not make the next one safe.
+  // has been reached and NO CEILING HAS BEEN ESTABLISHED. 
   //
   // *** THE INTERVAL WAIT BELONGS TO CHANNEL A ONLY. ***
   // A, B and C are three transactions within ONE sample. Waiting in
