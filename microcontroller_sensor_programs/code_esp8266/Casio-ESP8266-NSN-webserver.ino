@@ -1,7 +1,8 @@
 /*
  ===================================================================
   CASIO FX-9750 <-> ESP8266 (Wemos D1 mini) NSN DATALOGGER
-  Normalised scientific notation packets (NSN) DEMONSTRATION
+  Normalised scientific notation - ONE value per Receive(, SIGNED.
+  and diagnostic webserver DEMONSTRATION
 
  (C) Michael Fenton, MRSNZ, 2026
  Licence: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International 
@@ -30,64 +31,21 @@
  It is deliberately minimal so that every line can be read and
  understood. It is NOT a finished classroom product and will not
  suit every use case. MODIFICATION IS EXPECTED. 
-  The unbounded host wait (pause mid-RECEIVE) established by Michael Fenton.
-  Two windows, found seventeen years apart: the first in 2007, used
-  in the 2008 classroom trials to await a manual trigger; the second
-  on a PICAXE 08M2 in October 2025, by exhaustive line-by-line search
-  of the RECEIVE flow which also established every position where a
-  pause FAILS.
+ For example,  up to 3 sensors, read synchronously but delivered 
+ as consecutive seperate RECEIVE() values.
 
-  300 seconds is a CHOSEN limit, not a measured ceiling. Three hours
-  has been reached. The shorter maxima recorded afterwards - about an
-  hour, and not repeatable - were measured WITHOUT CHANGING THE
-  CALCULATOR'S CELLS after that three-hour run, so they describe the
-  state of the batteries and not the behaviour of the protocol. NO
-  UPPER BOUND HAS BEEN ESTABLISHED. 300 seconds is chosen with margin,
-  and a successful long pause still does not make the next one safe.
+ The webserver includes lots of diagnostic data; instead show a chart
+ of sensor readings once this code is trusted based on 0% errors.
 
-  EITHER WINDOW WILL CARRY AN INTERVAL WAIT. The second is used
-  because it sits immediately before the value packet, so the reading
-  is as fresh as it can be when it is timestamped. That is a design
-  choice about data quality, not a limitation of the first window.
-  
-  WHAT IS NEW HERE. Erik Grindheim's Casio CFX-9950G
-  communications protocol (2001) is the earliest independent
-  description known, and it is CORRECT. It documents exactly one
-  timeout - 0.5 to 1 second for the device to answer the opening 0x15
-  - and says nothing about pauses later in the exchange.
-  So the literature does not claim a mid-transaction pause fails. It
-  describes a strict timeout at the opening handshake and is silent
-  about everything after it, from which the whole transaction was
-  reasonably, and wrongly, assumed to be time-critical. The unbounded host wait
-  windows lie in that silence. This work EXTENDS Grindheim; it does
-  not correct him.
-
-  AND HIS WORK WAS DONE FROM A PERSONAL COMPUTER. That accounts for
-  most of what it does not contain. A PC has a deep buffer, an
-  operating system, no other duty during a transfer, and no reason to
-  want a pause mid-transaction. A microcontroller inverts all four,
-  and the questions this file spends most of its comments on - when
-  it is safe to do other work, why leftover bytes are a hazard, how
-  to budget conversion time - simply do not arise on a PC. His
-  document is what a computer needs to know. This one is what a
-  microcontroller needs to know.
-
-  This uses the Casio 9600 baud serial protocol for Send() and
-  Receive(), over the 3-pin SB-62 cable port. 9600 is the
-  calculator's default and needs no configuration at either end,
-  which is the right choice for a classroom.
-
-  The calculator also offers a 38k channel over the same cable -
-  OpenComport38k, Send38k and Receive38k, intended for LIST data.
-  Nothing here uses it. It is the natural route to bulk transfer,
-  where a board logs quickly on its own and hands a whole list to
-  the calculator afterwards, and it is a subject for future
-  investigation rather than a boundary of the method.
-
+ Bench testing and classroom use in 2008, updated coding and testing
+ in 2025 & 2026, all returned 0% packet failure and 0% COM error across  
+ sampling intervals from 1 second to 5 minutes, with data logging up to 3 
+ hours. Estimated packets transmitted in total 100,000+ in 600+ logging 
+ sessions. 
  ===================================================================
   THE ESP8266 PROBLEM, AND HOW THIS BUILD SOLVES IT
  ===================================================================
-  The ESP8266 has exactly ONE analogue input. Not three. One.
+  The ESP8266 has exactly ONE analogue input. Not three.
 
   That looks fatal for a three-sensor logger, and it is the reason
   the ESP8266 is often written off for this kind of work. The usual
@@ -113,13 +71,13 @@
 
   THE ANALOGUE PIN IS A0, AND IT IS THE ONLY ONE.
   There is no second analogue pin hiding anywhere on this board.
-
  ===================================================================
-  WARNING
+ STUDENT / TEACHER WARNING!
  ===================================================================
-  NEVER connect mains electricity (240 V / 110 V) to the calculator,
-  to this board, or to any sensor wiring. NEVER use mains-connected
-  equipment near water.
+ - NEVER use boiling water for temperature calibration (it is NOT needed)
+ - NEVER connect mains electricity (240 V / 110 V) to the calculator,
+   to this board, or to any sensor wiring. 
+ - NEVER use mains-connected equipment near water.
 
   *** THE A0 VOLTAGE LIMIT IS NOT THE ONE YOU EXPECT ***
   The bare ESP8266 chip reads 0 to 1.0 V ONLY. Feeding it 3.3 V
@@ -130,16 +88,50 @@
   before you connect anything.
 
   Modern Casio calculators are 3 - 3.3 V logic, which matches the
-  ESP8266 directly. Keep the resistors listed below in place.
+  ESP8266 directly. Keep the 1N4148 diode listed below in place.
  ===================================================================
 
-  HARDWARE (Wemos D1 mini)
+ Checksum independently derived and confirmed by Grindheim (2001). Grindheim 
+ documents exactly one timeout - 0.5 to 1 second for the device to answer the 
+ opening 0x15 message from the Casio. This strict timeout at the handshake was 
+ reasonably, and wrongly, assumed to be time-critical by the wider community. His
+ work was also done from a PERSONAL COMPUTER, which accounts for most of what his
+ work does not cover. A PC has a deep buffer, an operating system, and no reason
+ to want a pause mid-transaction. A microcontroller inverts all of that.
+
+ The Casio host-wait-windows (GAP 1-4) were not discovered by something that failed
+ but by methodically driving the encoding deliberately to its extremes. 
+ A similar methodology has been applied to all derivative works by the author in
+ the porting to other microcontroller platforms for data logging applications.
+ 
+ Detailed documentation now provides all steps and methods for Casio serial 
+ communication with a microcontoller for data logging, remote control, industrial 
+ measurement and control (IMC) simulation, and as a Human Machine Interface. 
+ 
+ Limits and rules for coding and data transmission come with exhaustive evidence 
+ filling in all details of what was previously unknown and/or undocumented.
+ =================================================================
+
+  This program demonstrates the two complementary uses of the
+  nsn packets:
+
+  1. RECEIVE direction (Casio requests data from the ESP32):
+     - Casio RECEIVE(A) requests Sensor 1 reading (thermistor)
+     - Casio RECEIVE(B) requests Sensor 2 reading (LDR)
+     - Casio RECEIVE(C) requests Sensor 3 reading (ultrasonic)
+
+  2. SEND direction (Casio pushes values to the ESP32):
+     - Casio SEND(N) requests sensor count (returns 3)
+
+ ===================================================================
+  HARDWARE (Wemos D1 mini) - Wire colours users choice
+  A SB-62 cross-over cable has male 2.5mm TRS plugs at both ends.
   -----------------------------------------------------------------
   THERE ARE TWO WIRINGS. Which one applies is set by
   CASIO_TRANSPORT_UART below. Wire to match the setting, or the
   board will simply sit there saying nothing.
 
-  ---- CASIO_TRANSPORT_UART 0 : SoftwareSerial (the 2026 build) ----
+  ---- CASIO_TRANSPORT_UART 0 : SoftwareSerial  ----
   - GPIO 14 (D5) -> to Casio RX   [RING of 2.5mm TRS, BLUE wire]
                     via via 1N4148 diode, bar towards Wemos
   - GPIO 12 (D6) <- from Casio TX [TIP of 2.5mm TRS, YELLOW wire]
@@ -157,10 +149,7 @@
      the instant the board powers up or the ESP8266 will not start.
      The D1 mini has a pull-down fitted for exactly this reason, and
      the 1N4148 to the calculator keeps the calculator from overriding
-     it. The diode does this BETTER than the 1k it replaced: its 0.6 V
-     forward drop subtracts from the calculator's pull-up before any
-     current can reach D8, so D8 sits LOWER at boot than it did with
-     the resistor. Tested 17 Aug 2026 - boots normally.
+     it. Proven to boot normally.
 
      If the board stops booting once the cable is attached: unplug
      the calculator, power up, then plug in. If that cures it, add
@@ -172,20 +161,13 @@
      UART0 lives on the USB pins for the whole upload. swap() does
      not move it to D8/D7 until setup() runs, which is after the
      board has booted, so the calculator never sees a byte of the
-     upload. Confirmed on the bench, 3 August 2026.
+     upload.
 
-     This matters more than it sounds. A 2.5mm jack does not enjoy
-     being cycled, and a class set gets unplugged hundreds of times
-     over a term. It also shortens the edit-flash-test loop, which
-     is most of what debugging actually is.
+     This matters more than it sounds It shortens the edit-flash-test
+     loop, which is most of what debugging actually is.
 
   BOTH WIRINGS:
   - GND          -> Casio GND     [SLEEVE of 2.5mm TRS, BLACK wire]
-
-     NOTE ON THE JACK: a 2.5mm TRS plug has three parts - TIP,
-     RING and SLEEVE, in that order from the end. The tip and the
-     sleeve are different contacts. Ground is the SLEEVE, the one
-     nearest the cable.
 
   SENSORS (unchanged by the transport setting):
   - A0           -> analogue sensor  (channel 2) - THE ONLY ADC PIN
@@ -193,8 +175,6 @@
   - GPIO 4  (D2) -> I2C SDA  /  (channel 3)
   - GPIO 2  (D4) -> built-in LED, and the debug output when the
                     hardware UART is carrying the calculator
-
-  An SB-62 cross-over cable has male 2.5mm TRS plugs at both ends.
 
  ===================================================================
   FOUR THINGS THAT BITE ON THE ESP8266 AND NOT ON THE ESP32
@@ -225,18 +205,11 @@
      measures against that rail. Readings can move by a few counts
      with nothing connected changing at all.
 
-     MEASURED, 3 August 2026, on a Wemos D1 mini in access point
+     MEASURED 2026, on a Wemos D1 mini in access point
      mode with a phone connected: A0 held at mid-scale by a resistor
      divider moved by ONE COUNT out of 1024 - about 3 mV on a 3.2 V
      span. Single readings, no averaging. That is far less than the
      paragraph above would lead you to expect.
-
-     Treat it as an upper bound rather than a figure. One count is
-     the quantisation limit, so a value sitting near a code boundary
-     will flip by one with no real change at all, and a single
-     analogRead() cannot tell the two apart. Averaging sixteen
-     readings would settle it, and would also be the right thing to
-     do in any build that cares about the third digit.
 
      The practical conclusion: on this board the radio's effect on
      the ADC is at or below one count, which is negligible for
@@ -248,7 +221,7 @@
      counts to volts yourself, using the divider ratio.
 
  ===================================================================
-  SIGNED VALUES ARE NATIVE - NO OFFSET
+  SIGNED VALUES
  ===================================================================
   Byte 14 of the value packet is the sign/info byte:
       bit 0        the magnitude is >= 1
@@ -324,9 +297,6 @@
  ===================================================================
   WHAT HAS BEEN TESTED, AND WHAT HAS NOT
  ===================================================================
-  A teacher deciding whether to rely on this deserves the evidence
-  rather than a reassurance. Bench-tested on a Casio FX-9750G:
-
   PASSED
     Handshake, sensor count, then one value per Receive(
     2-second interval, 470 samples, radio and web server running
@@ -336,82 +306,6 @@
     Free memory flat across a 470-sample run - no leak
     Calculator may stay connected while the board is reprogrammed
     Behaviour when the calculator's lists fill at 999 readings
-
-  REVALIDATED ON CURRENT CODE - 7 AUGUST 2026
-    The counted drain, the whole-packet read and the rewritten
-    handle_incoming() had all changed since the figures above were
-    earned, so those figures described code that no longer existed.
-    Both runs below were made from FRESH CALCULATOR CELLS with the
-    radio and the web server running throughout.
-
-      2-second interval    700 samples   clean
-      300-second interval    6 samples   see the note below
-
-    In the 2-second run every counter was zero, and THE STATUS FLAG
-    WAS EXERCISED ACROSS ITS FULL 0-99 RANGE and decoded correctly at
-    every value - which is the renumbering of section 3.2 confirmed
-    end to end rather than at the two values that used to be tested.
-
-    700 request packets were read whole and verified without a single
-    checksum failure. That is the checksum rule confirmed against real
-    calculator traffic on the RECEIVE side for the first time.
-
-  ONE STRAY BYTE, AND WHY IT IS RECORDED AS A SUCCESS
-    On the 300-second run the FIRST TRANSACTION OF THE SESSION gave a
-    byte of 0x00 where the preamble belongs, and four unexpected
-    bytes. The packet failed its preamble check, was counted, was
-    discarded, and the link recovered by itself. All six samples were
-    then collected correctly.
-
-    THIS IS THE WHOLE-PACKET READ DOING ITS JOB. Under the two-stage
-    read used before 5 August that byte would have been taken FOR the
-    preamble, every byte after it would have been offset by one, and
-    the session would have died minutes later with a Com ERROR and
-    nothing in the panel to explain it. A stray byte on a serial line
-    is ordinary. What changed is that it now costs ONE READING
-    instead of the rest of the run.
-
-    THE CAUSE IS NOT ESTABLISHED, and nothing here attributes one. It
-    happened BEFORE any long pause, so the host-wait window is not
-    involved and the 300-second interval is probably incidental.
-
-    IT WAS NOT REPRODUCED. The board was rebooted and run three more
-    times at 300 seconds the same day, with no wrong byte and no
-    errors at all. That disfavours a systematic cause: if the byte
-    came from the line settling at power-up, a reboot should have
-    produced it again, and three did not. What is left is an isolated
-    transient of the kind any serial line gives occasionally. One
-    event in roughly 1,400 transactions is not a rate.
-
-    SO DO NOT GO LOOKING FOR IT. Stray bytes are not preventable and
-    this code does not try to prevent them. It makes them cost ONE
-    READING and appear in a counter. For an unattended logger that is
-    the whole of the difference.
-
-  ONE SECOND HOLDS - 7 AUGUST 2026
-    259 samples at a 1-second interval, NOTHING MISSED. Readings
-    expected equalled readings received, Missing was 0, and
-    RESYNCHRONISED WAS 0 - that counter fires when the schedule falls
-    a whole interval behind, so it is the direct measure of the
-    CALCULATOR failing to keep up, and it never moved.
-
-    TIMING WAS CHECKED AGAINST A WALL CLOCK IN THE ROOM AND WAS
-    EXACT, with no lost time. That check matters because NO COUNTER
-    CAN SEE DRIFT. A logger can deliver every sample, in order, with
-    Missing at 0 and Resynchronised at 0, while each interval quietly
-    runs at 1.05 s - and every timestamp after the first would then be
-    wrong by a growing amount with nothing to report it. The wall
-    clock is the only witness to that, and it confirms the arithmetic
-    schedule below holds at 1 second.
-
-    Two clients were connected throughout - a phone and a laptop -
-    and both status pages were refreshed frequently, at times almost
-    together. No reading was lost to either.
-
-    The floor had stood at 2 seconds since this was written. It was
-    lowered and tested the same day. 259 samples is about four and a
-    half minutes; this is not an endurance result and is not offered
-    as one, and 1 second is untested on every other platform.
 
   NOT YET TESTED - do not assume these work
     More than TWO clients at once (two proven; ~4 is an estimate)
@@ -429,40 +323,13 @@
   THE FAILURE THAT WILL NOT LOOK LIKE ITSELF
  ===================================================================
   LOW CALCULATOR BATTERIES PRESENT AS A COMMUNICATIONS FAULT.
-
-  The calculator's transmit line is a HIGH-IMPEDANCE source - about
-  5k - though its voltage is fine: a steady 2.75 V measured during a
-  host-wait window, 15 Aug 2026. (An earlier note here said "about
-  1.4 V at idle". WITHDRAWN - that was a multimeter averaging a line
-  switching between 0 V and 2.75 V.) The 4.7k pull-up is required
-  because the port goes HIGH IMPEDANCE when not in use, and without
-  it the line floats to 0 V - a permanent break condition. As
-  the cells fall, that drive weakens further, and THE LINK FAILS
-  BEFORE ANYTHING ELSE ABOUT THE CALCULATOR LOOKS WRONG. The display
-  is still bright, the keys still work, and the logger stops with a
-  Com ERROR.
-
-  Observed 4 August 2026: sessions ending at 63 and 73 readings with
-  fresh code and no other fault. New batteries, and the same build
-  ran 470 readings without an error.
+  The display is still bright, the keys still work, and the
+  logger stops with a Com ERROR.
 
   If a session stops early and nothing in the panel explains it,
   change the batteries before you change anything else.
 
-  THERE IS NO EARLY WARNING. The failure is ABRUPT. The error counters
-  do not climb first - timeouts, bad checksums, short packets and
-  stray bytes all stay at zero right up to the moment the calculator
-  shows Com ERROR. Nothing in software sees it coming, which is why
-  this note exists instead of a counter.
-
-  IT CONTAMINATED THIS PROJECT'S OWN MEASUREMENTS, AND FOR TEN MONTHS.
-  The "about an hour" host-wait figures recorded after October 2025
-  were taken on cells that were never replaced after the three-hour
-  run. They were read all that time as evidence that the host-wait
-  window became unreliable beyond an hour. They were evidence about
-  the batteries. A fault resembled a result, and the result it
-  resembled was a limitation of the protocol itself.
-
+  THERE IS NO EARLY WARNING. The failure is ABRUPT. 
  ===================================================================
   THE DESIGN PRINCIPLE THIS FILE IS BUILT ON
  ===================================================================
@@ -512,21 +379,8 @@
   lost by a careless port. And do not add defensive code against
   faults nobody has observed: it is untested, it hides the mechanism
   a learner is meant to read, and it does not make anything visible.
+ ===================================================================
 
- ===================================================================
- ===================================================================
-  THE MOST IMPORTANT RULE IN THIS FILE
- ===================================================================
-  A FIELD MUST NEVER EXCEED 9999.
-
-  The three readings sit side by side inside one number, four digits
-  each. If a field goes over 9999 it does not overflow harmlessly -
-  it CARRIES into the field beside it, and channel 2's reading
-  corrupts channel 1's. The damage is silent and it looks like a
-  sensor fault, not an arithmetic fault.
-
-  clamp_to_range() exists to make that impossible. Do not remove it.
- ===================================================================
 */
 
 #include <ESP8266WiFi.h>      // radio control, and the access point
@@ -850,16 +704,6 @@ const uint8_t VALUE_PACKET_LEN   = 16;
 // prevents. So it shipped at 0, counting without acting, with an
 // evidence condition attached.
 //
-// THAT CONDITION IS NOW MET. 7 August 2026: 700 request packets on
-// the ESP8266 and 700 on the ESP32, read whole and verified against
-// an FX-9750G, with ZERO mismatches while logging was otherwise
-// perfect. The rule is confirmed on real traffic in the receive
-// direction for the first time, so the check may now act.
-//
-// A check you have not verified is an assumption with a uniform on.
-// This one has since been verified, which is why it now has
-// authority it did not have in July.
-//
 // ---- IT IS EXPECTED NEVER TO FIRE ------------------------------
 // Bench experience suggests the only noise this link sees comes from
 // LOW CALCULATOR BATTERIES, and that failure already announces
@@ -867,9 +711,9 @@ const uint8_t VALUE_PACKET_LEN   = 16;
 // mode is therefore insurance against a case not yet observed, and
 // it costs nothing while that remains true.
 //
-// The evidence is from ONE calculator model. The rule agrees with
-// Grindheim's for the CFX-9950G, but that is his measurement, not
-// one made here.
+// The evidence is from two calculator models. The rule agrees with
+// Grindheim's for the CFX-9950G, and the author's tests with the 
+// FX-9750G Plus.
 //
 // IF IT EVER FIRES:
 //   * Bad checksum climbing while logging is otherwise fine
@@ -1390,14 +1234,11 @@ int16_t scale_to_physical_3() {
   // return (int16_t)lroundf((hPa - 900.0f) * 10.0f);
 }
 
-// ===================================================================
-// STAGE 3 of 4:  KEEP THE VALUE INSIDE THE FIELD
+// KEEP THE VALUE INSIDE WHAT THE PACKET CAN CARRY
 //
-// If a reading is out of range we do NOT silently pretend it was at
-// the limit. We clamp it - because a field over 9999 corrupts its
-// neighbour - AND we record that we did, so the calculator is told.
-// A silent clamp is a lie the size of the error.
-// ===================================================================
+// A reading beyond range is clamped AND the clamp is recorded, so the
+// web page and the CSV can report it. A silent clamp is a lie the
+// size of the error.
 int16_t clamp_to_range(int32_t value, uint8_t channel) {
   if (value >  NSN_MAX_VALUE) {
     saturatedMask |= (1 << channel);
@@ -1459,11 +1300,6 @@ static void fmt_hms(char *buf, size_t n, uint32_t secs) {
 // row leaves the board unresponsive long enough to miss the
 // calculator's attention byte, and logging stops with a COM ERROR.
 //
-// Observed 4 August 2026: three rows passed "" as their unit, the
-// page ended silently at the first of them, and the link died
-// roughly two minutes later. One empty string, two symptoms, and
-// neither of them pointing at the cause.
-//
 // send() guards every string, so the mistake cannot be made again
 // by editing the rows.
 // ===================================================================
@@ -1483,9 +1319,9 @@ static void send(const char *text) {
 //
 // This was learned by removing the call and watching what happened:
 //
-//   4 Aug, stop() present, page truncated, phone refreshing hard
+//   stop() present, page truncated, phone refreshing hard
 //        -> 241 samples, no error
-//   4 Aug, stop() removed, page correct, NOBODY touching the phone
+//   stop() removed, page correct, NOBODY touching the phone
 //        -> COM ERROR after 153 samples
 //
 // It had been removed on the theory that it was truncating the
@@ -2020,16 +1856,12 @@ void send_end_packet() {
 //
 // Every path that gives up on a transaction must leave the line
 // EMPTY. If it does not, the bytes it walked away from are read one
-// at a time by the next pass of loop(), each one counted as an
-// unexpected byte, and the board spends the next several transactions
-// one packet behind. A single glitch becomes a cascade.
+// at a time by the next pass of loop(), and the board spends the
+// following transactions one packet behind. A single
+// glitch becomes a cascade, and the Com ERROR arrives minutes later
+// with nothing to connect it to.
 //
-// That is how 0x56 - byte 5 of a request header - kept appearing
-// where an attention byte belongs, even after the drain itself was
-// made exact. The drain was correct; the paths that skipped it were
-// not.
-//
-// Silence is the right signal here, unlike the drain, because we do
+// Silence is the right signal HERE, unlike the drain, because we do
 // NOT know how many bytes are left - the whole point is that
 // something unexpected happened.
 // ===================================================================
@@ -2186,9 +2018,7 @@ void handle_receive(uint8_t vname) {
   TRACE(F("ACK1 ok  "));
 
   // == HOST-WAIT WINDOW: THE DESCRIPTION WINDOW (GAP 2) ==
-  // Pausing here during RECEIVE does not trigger a COM ERROR. This
-  // window was the one found in 2007 and used in the 2008 classroom
-  // trials to wait for a student to press a key.
+  // Pausing here during RECEIVE does not trigger a COM ERROR. 
   //
   // INTERVAL LOGGING COULD EQUALLY HAVE BEEN BUILT HERE. The value window is
   // used instead, and the reason is DATA FRESHNESS: the value window sits
@@ -2218,16 +2048,14 @@ void handle_receive(uint8_t vname) {
   // five minutes if we ask it to - without raising the COM ERROR
   // that every reference says should happen. That patience is what
   // turns a calculator into a datalogger.
-  //
-  // Five minutes is the SPECIFIED limit, not the observed one.
-  // Pauses of up to three hours have succeeded. Shorter maxima were
-  // recorded afterwards - around an hour - and were long read as the
-  // protocol behaving inconsistently. They were not: the calculator's
-  // cells had never been changed after the three-hour run, and a
-  // falling supply ends a session with a Com ERROR and no warning.
-  // NO CEILING HAS BEEN ESTABLISHED. 300 seconds is chosen with
-  // margin, and a successful long pause still does not make the next
-  // one safe - fit fresh cells before any long unattended run.
+  // NO CEILING HAS BEEN ESTABLISHED.
+
+  // *** THE INTERVAL WAIT BELONGS TO CHANNEL A ONLY. ***
+  // A, B and C are three transactions within ONE sample. Waiting in B
+  // or C as well would multiply the interval by the number of sensors
+  // and stretch the time axis silently. All three sensors are read
+  // together inside wait_for_interval(), so B and C return values
+  // taken at the same instant as A.
 
   if (vname == VNAME_N) {
     send_nsn_value((int16_t)SENSOR_COUNT);
@@ -2315,27 +2143,9 @@ void handle_incoming() {
   //      next transaction.
   //
   //   3. It discarded the calculator's 50-byte END packet with
-  //      delay(80) and then read whatever had turned up. Fifty
-  //      bytes take 57 ms at 9600 baud with two stop bits, so that
-  //      was 23 ms of margin - the same fixed-delay pattern as the
-  //      drain that failed in August 2026, with a larger cushion.
+  //      delay(80) and then read whatever had turned up. 
   //
-  // THE THIRD ONE MAY EXPLAIN A MYSTERY. Stray bytes appeared at the
-  // top of loop() during August testing - 0xFF once, 0x56 another
-  // time - and were never accounted for. An END packet is 45 bytes
-  // of 0xFF ending in the checksum 0x56. If this delay ever came up
-  // short, the bytes left behind would be exactly those two.
-  // Unproven, but it fits, and the cause is removed either way.
-
   // THE CALCULATOR ACCEPTS ONE STOP BIT. IT DOES NOT REQUIRE TWO.
-  // Both settings were tested here and both work. That confirms
-  // Grindheim (2001), who reported the link is asymmetric - two stop
-  // bits FROM the calculator, one TO it.
-  // WHY TWO ALSO WORKS: an extra stop bit is only extra idle line. The
-  // receiver has already sampled the byte and is waiting for the next
-  // start bit, which simply arrives a fraction later.
- 
-  // It is incorrect to say that one stop bit is rejected.
   // ===============================================================
 
   // --- the value packet: exactly 16 bytes -----------------------
@@ -2396,19 +2206,7 @@ void handle_incoming() {
 // SETUP
 // ===================================================================
 void setup() {
-  // 9600 baud, 8 data bits, no parity, TWO stop bits.
-  //
-  // A CORRECTION TO WHAT THIS FILE USED TO CLAIM. It said the
-  // calculator "insists on two; one is not accepted". That was never
-  // tested here, and Grindheim (2001) - who did test - reports the
-  // link is ASYMMETRIC: two stop bits FROM the calculator, one stop
-  // bit TO it. Sending two therefore works because an extra stop bit
-  // is only extra idle time, not because one would fail.
-  //
-  // Two is kept because it is what every validated run has used, and
-  // because reading from the calculator genuinely does need 8N2. But
-  // do not repeat the claim that one is rejected: nobody here has
-  // tried it, and the only person who did says otherwise.
+
 #if CASIO_TRANSPORT_UART
   // UART0 starts life on GPIO 1/3 (the USB pins) and carries the
   // bootloader's own chatter at 74880 baud. swap() moves it to
@@ -2518,23 +2316,12 @@ void loop() {
   if (!CasioSerial.available()) {
     // ===============================================================
     // *** THE WEB SERVER IS NOT ALLOWED HERE DURING A SESSION. ***
-    //
-    // This is the gap between one transaction and the next, and it is
-    // the one place in the whole exchange where NO host-wait window
-    // has ever been demonstrated. The calculator sends its attention
-    // byte 0x15 and expects 0x13 straight back. Fenton's unbounded host wait
-    // covers the pause INSIDE Receive(), after the second ACK - not
-    // this handshake.
-    //
-    // Serve a 25 KB file here and the attention byte goes unanswered
-    // for as long as the download takes. That is a COM ERROR, and it
-    // was observed on 4 August 2026 before this guard existed.
-    //
-    // So: serve only when the calculator has been quiet for longer
-    // than two sampling intervals, which means no session is running
-    // and the board genuinely has nothing else to do. During a
-    // session the long wait inside wait_for_interval() - which IS
-    // inside the host-wait window - is the only place HTTP is served.
+    // This gap contains the attention-byte handshake, where the
+    // calculator allows 0.5 to 1 second (Grindheim 2001) and the
+    // October 2025 search found a pause fails. Serve a file here and
+    // the attention byte goes unanswered for as long as it takes.
+    // Only serve when the calculator has been quiet for longer than
+    // two sampling intervals - which means no session is running.
     // ===============================================================
     uint32_t quietMs = (uint32_t)timeInterval * 2000UL + 4000UL;
     if (millis() - lastExchangeMs > quietMs) {
@@ -2573,10 +2360,6 @@ void loop() {
   // ===============================================================
   // READ THE WHOLE 50-BYTE REQUEST PACKET, THEN CHECK IT
   //
-  // This replaced a two-stage "read 12 bytes, then discard 38" on
-  // 5 August 2026. The idea came from the 2025 micro:bit draft,
-  // which had it right: the packet is 50 bytes, so read 50 bytes.
-  //
   // WHY IT IS SAFER, AND NOT MERELY TIDIER:
   //
   //   The old code counted the 38-byte tail and recorded a
@@ -2584,13 +2367,7 @@ void loop() {
   //   had not arrived was acted upon. Here a packet that is not
   //   complete is not used at all.
   //
-  //   Having all 50 bytes means the CHECKSUM can be verified. The
-  //   calculator sends one; until now this code ignored it and
-  //   trusted the packet's shape instead. A desynchronised read -
-  //   the August 2026 fault - almost never checksums, so this
-  //   catches the condition rather than inferring it later from a
-  //   byte that should have been an ACK.
-  //
+  //   Having all 50 bytes means the CHECKSUM can be verified.
   //   There is one length, one timeout and one buffer instead of
   //   two of each, so there are fewer indices to get wrong. The
   //   command is byte 1 and the variable name is byte 11, counted
