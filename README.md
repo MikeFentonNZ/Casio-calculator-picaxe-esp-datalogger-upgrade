@@ -88,21 +88,19 @@ Files are being released in stages. All Casio BASIC and microcontroller code is 
 
 * **NEVER connect mains electricity (240 V / 110 V)** to the calculator, the microcontroller, or any sensor wiring. **NEVER use mains-connected equipment near water.**
 * **Keep every sensor signal within the board's own supply range** - 0 V to 3.3 V on the ESP and micro:bit boards, 0 V to 5 V on an Arduino Uno or a Picaxe run from 5 V. The ESP32 and ESP8266 are not 5 V tolerant. A bare ESP8266 A0 pin reads 0 to 1.0 V only; 3.3 V will destroy it. However, popular development boards like NodeMCU and Wemos D1 Mini include an onboard resistor voltage divider, which safely extends their external board tolerance to 0 to 3.2V–3.3V
-* **Do not connect 5 V logic** to the Casio port unless a bidirectional level converter is used.
-* **When breadboarding with a 4-pin USB serial cable, remove the red V+ wire** and power the microcontroller from its own cells.
-* **Never use boiling water for temperature calibration** — it is not needed — and never work near live electrical outlets.
+* **Always use the universal serial interface circuit - all platforms will then safely work with both 3V FX-9750 GIII and FX-9750G Plus calculators
+* **Never use boiling water for temperature calibration** — it is not needed.
 
 ## Quick start for teachers
 
-1. **Gather parts:** Casio SB-62 cable or breakout; Picaxe, ESP32, Wemos, micro:bit or Arduino Uno; battery pack; one sensor; jumper wires; the 4.7 kΩ resistor and 1N4148 diode
+1. **Gather parts:** Casio SB-62 cable or breakout; Picaxe, ESP32, Wemos, micro:bit or Arduino Uno; battery pack; one sensor; jumper wires; the 4.7 kΩ resistor, 10k resistor, 1N5711 and 1N4148 diodes
 2. **Install the calculator program** from `casio_calculator_program`.
 3. **Wire and test**:
 
    * A calculator: FX-9750 or FX-9860 series. Casio issues one firmware image for the FX-9750GIII and FX-9860GIII, so the protocol behaves the same on both.
    * A microcontroller: Picaxe 08M2 or 14M2 - cheapest, one chip, no board. An ESP8266 or ESP32 development board costs more but adds WiFi and timestamping. A BBC micro:bit needs no sensors at all to get started, because two of its three channels are inside the board. An **Arduino Uno R3** works too but all three of its channels need a wired sensor.
    * A cable: a Casio SB-62, or two 2.5 mm 3-pin plugs and some wire.
-   * Resistor: a 4.7 k pull-up from the calculator's transmit line to +3.3 V. When the calculator's port is not in use it goes high impedance and the line floats to 0 V. Serial lines idle **high**, so a microcontroller already listening reads that as a permanent break and logs junk until the calculator wakes its port. The pull-up supplies the idle state the calculator does not.
-   * 1N4148 diode: in series on the calculator's receive line, **bar (cathode) toward the microcontroller**. Reversed, nothing works. The diode makes the output open-drain — the microcontroller only ever pulls the line low, and the calculator raises it with its own internal pull-up. That is why **no series resistor is fitted alongside it**, and why the same wiring suits a 3.3 V calculator and a 5 V one. A 1N914 is equivalent; a Schottky is not needed.
+   * Universal serial interface circuit: See the Technical manual or the circuit diagram (serial_protocol_technical-manual folder)
    * A sensor: a thermistor or an LDR makes a good first one. Both read in about a millisecond.
 4. **Install the microcontroller program**; suggested using the Picaxe for first-use simplicity.
 5. **Run a lesson:** Turn on the microcontroller, launch the data logger program on the calculator, collect samples, graph the data, and use the calculator's own analysis tools for regression and interpretation.
