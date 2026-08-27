@@ -47,13 +47,13 @@ The encoding method is withheld pending peer-reviewed publication.
 
 Files are being released in stages. All Casio BASIC and microcontroller code is available. Student / teacher material is now available.
 
-* `casio\_calculator\_program` — the Casio BASIC datalogger program in `.txt` and `.g1m` form, a key-code utility, and installation notes. Casio BASIC for the FX-9750G Plus is in .txt format.
-* `microcontroller\_sensor\_programs` - Picaxe, ESP8266, ESP32, micro:bit and Arduino programs. The Picaxe BASIC code is compatible with the FX-9750G Plus.
-* `original\_2007-2010\_classroom\_research` — the 2008 education research report, conference presentations, sensor builds,and analysis of classroom use.
-* `photos\_video` — Casio serial protocol diagrams, assembly, and use.
-* `original\_2007-2010-classroom-research` — the 2008 education research report, conference presentations, sensor builds,and analysis of classroom use.
-* `serial\_protocol\_technical\_manual` — serial protocol full description, packet formation, and universal SB-62 cable wiring diagram for all microcontroller platforms.
-* `teaching\_resources` - student and teacher guide, protocol and packet structure, crossover cable wiring diagrams, experiments, sensor unit construction, safety reminders.
+* `casio_calculator_program` — the Casio BASIC datalogger program in `.txt` and `.g1m` form, a key-code utility, and installation notes. Casio BASIC for the FX-9750G Plus is in .txt format.
+* `microcontroller_sensor_programs` - Picaxe, ESP8266, ESP32, micro:bit and Arduino programs. The Picaxe BASIC code is compatible with the FX-9750G Plus.
+* `original_2007-2010_classroom_research` — the 2008 education research report, conference presentations, sensor builds,and analysis of classroom use.
+* `photos_video` — Casio serial protocol diagrams, assembly, and use.
+* `original_2007-2010-classroom-research` — the 2008 education research report, conference presentations, sensor builds,and analysis of classroom use.
+* `serial_protocol_technical_manual` — serial protocol full description, packet formation, and universal SB-62 cable wiring diagram for all microcontroller platforms.
+* `teaching_resources` - student and teacher guide, protocol and packet structure, crossover cable wiring diagrams, experiments, sensor unit construction, safety reminders.
 * `LICENSE`, `README.md`, `.gitattributes`
 
 **Next release:** An updated teacher/student manual.
@@ -62,7 +62,7 @@ Files are being released in stages. All Casio BASIC and microcontroller code is 
 
 * **Compatible calculators:** Casio FX-9750 and FX-9860 series. All figures below were measured on an FX-9750GIII. Casio issues one firmware image for the FX-9750GIII and FX-9860GIII, so the protocol behaves the same on both.
 * **Microcontrollers:** Picaxe 08M2, 14M2, 18X; ESP8266 (Wemos D1 mini); ESP32; BBC Micro:bit V1 and V2; Arduino Uno R3.
-* \*\*Arduino Uno R3:  **Two components are mandatory on this board:** the 4.7 kΩ pull-up must go to **+5 V** (it lifts the calculator's 2.75 V mark above the Uno's 3.0 V threshold — bare, an Uno cannot read a GIII), and the **1N4148 diode must be fitted** (it keeps the Uno's 5 V output off a 3.3 V input that is not 5 V tolerant).
+* **Arduino Uno R3:  **Two components are mandatory on this board:** the 4.7 kΩ pull-up must go to **+5 V** (it lifts the calculator's 2.75 V mark above the Uno's 3.0 V threshold — bare, an Uno cannot read a GIII), and the **1N4148 diode must be fitted** (it keeps the Uno's 5 V output off a 3.3 V input that is not 5 V tolerant).
 * **Sampling interval:** 300 seconds is a chosen working limit with margin, not a ceiling. A pause of three hours has been held, and no pause has ever failed for being too long. Battery voltage is the limiting factor. The Casio auto-power-off (APO) is disabled.
 * **999 readings per session:** The calculator's list capacity, confirmed on hardware. MORE readings can be made if readings are spread across lists. Casio data storage capacity is the limiting factor.
 * **Non-volitile memory:** The calculator's logged data is retained in the event of a power loss.
