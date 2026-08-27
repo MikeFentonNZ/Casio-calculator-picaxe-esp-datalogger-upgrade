@@ -34,7 +34,7 @@ The calculator needs no modification or firmware change. It does not need to kno
 
 **→** [**FINDINGS.md**](FINDINGS.md) — what is original here, what the evidence is, what is deliberately withheld, and the prior work this builds on. Start there if you want the short version. It also invites anyone with earlier prior art to say so.
 
-* **The technical manual — start here to build one.** It is in this repository, in two places for convenience: [`serial\_protocol\_technical-manual/`](serial_protocol_technical-manual/RIGEL-Casio-Serial-Protocol-Technical-Manual.pdf) alongside the figures it uses, and [`teaching\_resources/`](teaching_resources/RIGEL-Casio-Serial-Protocol-Technical-Manual.pdf) alongside the teacher guides. The two files are identical. To cite it, use the DOI: Fenton, M. (2026). *Casio Protocol and Wiring Guide: Serial Communication, Wiring and Packet Structure for Microcontroller Data Logging and Control (Second Edition).* Zenodo. https://doi.org/10.5281/zenodo.22003135
+* **The technical manual — start here to build one.** It is in this repository, in two places for convenience: [`serial_protocol_technical-manual/`](serial_protocol_technical-manual/RIGEL-Casio-Serial-Protocol-Technical-Manual.pdf) alongside the figures it uses, and [`teaching_resources/`](teaching_resources/RIGEL-Casio-Serial-Protocol-Technical-Manual.pdf) alongside the teacher guides. The two files are identical. To cite it, use the DOI: Fenton, M. (2026). *Casio Protocol and Wiring Guide: Serial Communication, Wiring and Packet Structure for Microcontroller Data Logging and Control (Second Edition).* Zenodo. https://doi.org/10.5281/zenodo.22003135
 * **The 2008 first edition:** Fenton, M. (2008). *Connecting the PICAXE 08M and PICAXE 18X to the Casio 9750G Plus graphics calculator* and *RIGEL / CASIO Data logger manual.* Zenodo. https://doi.org/10.5281/zenodo.22004530
 * **Priority disclosure:** Fenton, M. (2026). *Casio Graphing Calculator Serial Interface: Priority Disclosure of Timing Discoveries, Encoding Invention, and Operational Modes (FX-9750 and FX-9860 Series).* Zenodo. https://doi.org/10.5281/zenodo.19303911
 * **2008 classroom research:** Fenton, M. (2008). *Authentic Learning Using Mobile Sensor Technology.* New Zealand Ministry of Education E-Learning Fellowship report. Zenodo. https://doi.org/10.5281/zenodo.19302276
@@ -60,9 +60,9 @@ Files are being released in stages. All Casio BASIC and microcontroller code is 
 
 ## Features
 
-* **Compatible calculators:** Casio FX-9750 and FX-9860 series. All figures below were measured on an FX-9750GIII. Casio issues one firmware image for the FX-9750GIII and FX-9860GIII, so the protocol behaves the same on both.
+* **Compatible calculators:** Casio FX-9750 and FX-9860 series. Figures below were measured on an FX-9750G Plus and FX-9750GIII. Casio issues one firmware image for the FX-9750GIII and FX-9860GIII, so the protocol behaves the same on both.
 * **Microcontrollers:** Picaxe 08M2, 14M2, 18X; ESP8266 (Wemos D1 mini); ESP32; BBC Micro:bit V1 and V2; Arduino Uno R3.
-* **Arduino Uno R3:  **Two components are mandatory on this board:** the 4.7 kΩ pull-up must go to **+5 V** (it lifts the calculator's 2.75 V mark above the Uno's 3.0 V threshold — bare, an Uno cannot read a GIII), and the **1N4148 diode must be fitted** (it keeps the Uno's 5 V output off a 3.3 V input that is not 5 V tolerant).
+* **Arduino Uno R3:  **Components are mandatory on this board:** the 4.7 kΩ pull-up must go to **+5 V** (it lifts the calculator's 2.75 V mark above the Uno's 3.0 V threshold — bare, an Uno cannot read a GIII), and the **1N4148 and 1N5711 diodes must be fitted** (it keeps the Uno's 5 V output off a 3.3 V input that is not 5 V tolerant).
 * **Sampling interval:** 300 seconds is a chosen working limit with margin, not a ceiling. A pause of three hours has been held, and no pause has ever failed for being too long. Battery voltage is the limiting factor. The Casio auto-power-off (APO) is disabled.
 * **999 readings per session:** The calculator's list capacity, confirmed on hardware. MORE readings can be made if readings are spread across lists. Casio data storage capacity is the limiting factor.
 * **Non-volitile memory:** The calculator's logged data is retained in the event of a power loss.
@@ -72,7 +72,7 @@ Files are being released in stages. All Casio BASIC and microcontroller code is 
 * **Both ESP boards keep exact time at 1 Hz:** Verified in trials against an external timer.
 * **Optional wireless link:** on ESP32 hardware an ESP-NOW link has been proven through a house, across 20 metres and into a metal three-bay shed. In open air, 200-plus metres, measured repeatedly.
 * **A DS18B20 temperature sensor costs a Picaxe 750 ms per reading:** The picaxe chip's clock stopped throughout. That is a 16 % time-axis error at a 5-second interval. Use 30 seconds or longer for a rate, or use an ESP board, which does not have this problem.
-* **Interface:** Casio SB-62, 3-pin TTL serial at 9600 baud. The FX-9750GIII port is 3.3 V; older FX-9750G Plus calculators are 5 V TTL.
+* **Interface:** Casio SB-62, 3-pin serial at 9600 baud. The FX-9750GIII port is 3.3 V logic; older FX-9750G Plus calculators are 5 V logic.
 
 ## More than data logging:
 
@@ -95,7 +95,7 @@ Files are being released in stages. All Casio BASIC and microcontroller code is 
 ## Quick start for teachers
 
 1. **Gather parts:** Casio SB-62 cable or breakout; Picaxe, ESP32, Wemos, micro:bit or Arduino Uno; battery pack; one sensor; jumper wires; the 4.7 kΩ resistor and 1N4148 diode
-2. **Install the calculator program** from `casio\_calculator\_program`.
+2. **Install the calculator program** from `casio_calculator_program`.
 3. **Wire and test**:
 
    * A calculator: FX-9750 or FX-9860 series. Casio issues one firmware image for the FX-9750GIII and FX-9860GIII, so the protocol behaves the same on both.
