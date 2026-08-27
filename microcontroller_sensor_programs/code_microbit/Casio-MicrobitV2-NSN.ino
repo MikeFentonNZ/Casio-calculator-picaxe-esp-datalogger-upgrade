@@ -25,10 +25,16 @@
  bench-validated in 2025 / reconfirmed 2026 with 0% packet failure.
 
   *** STATUS: PROOF OF CONCEPT - A FOUNDATION TO BUILD ON ***
+  Validated against an FX-9750GIII and FX-9750G Plus: 
+  Receive(N), Send(T), then repeated
+  Receive(A)/(B)/(C) sampling at a set interval, values landing in the
+  calculator's Lists across multiple samples. The Micro:bit is the fourth
+  validated platform.
+
  This is a reference implementation based on a validated method.
  It is deliberately minimal so that every line can be read and
  understood. It is NOT a finished classroom product and will not
- suit every use case. MODIFICATION IS EXPECTED. 
+ suit every use case. MODIFICATION IS EXPECTED.
 
  ===================================================================
   THE SENSORS  -  AND WHICH NEED A WIRE
@@ -80,7 +86,7 @@
   The Picaxe BASIC code checked the one-wire serial number to detect
   if a DS18B20 was disconnected if configuration code said it was present.
 
-  Not enables here yet...
+  Not enabled here yet...
 
   THIS BOARD ALSO KEEPS ITS USB SERIAL MONITOR, which the V1 and the
   PICAXE do not. DEBUG_TRACE is the other place a fault will show.
@@ -115,7 +121,23 @@
             BAR (cathode) TOWARD THE MICRO:BIT
   - P12  <- from Casio TX [TIP of 2.5mm TRS, YELLOW]
   - P12  -> 4.7k pull-up to 3V   *** REQUIRED, NOT OPTIONAL ***
+  - P12  -> 10k IN SERIES from the TIP, and a 1N5711 Schottky
+            from P12 to 3V, BAND toward 3V
+            *** REQUIRED WITH AN FX-9750G PLUS ***
   - GND  -> Casio GND     [SLEEVE of 2.5mm TRS, BLACK]
+
+  THE 10k AND THE SCHOTTKY - WHY THEY ARE HERE.
+  An FX-9750G Plus holds its transmit line at 4.75 V, measured.
+  This is a 3 V board, so that lands above its own supply. The 10k
+  limits the current to about 110 uA and the 1N5711 - 0.3 V forward
+  - conducts before the nRF's internal protection diode at 0.6 V
+  and takes the current first. An FX-9750GIII holds its line at
+  2.75 V, so with a GIII the Schottky never conducts and costs
+  nothing. Small-signal Schottky only: BAT85 or BAT43 will do, a
+  1N5817 will not - power Schottkys leak and lift the LOW level.
+  THE 10k IS IN SERIES ONLY. Nothing goes from P12 to GND: that
+  makes a divider, which drops a GIII's 2.75 V to about 1.8 V.
+  See INTERFACE-universal-wiring.md.
 
   WHY A DIODE AND NOT A SERIES RESISTOR. The diode makes the output
   OPEN-DRAIN: this board can only ever pull the line LOW, and the
@@ -147,7 +169,11 @@
    DEBUG_TRACE          1   protocol bytes to the USB monitor. This
                             board keeps its USB port, so unlike the
                             ESP8266 this costs nothing.
-   STOP_BITS_TO_CASIO   1   1 or 2. See the note at UART_CONFIG.
+   STOP_BITS_TO_CASIO   2   REQUIRED for an FX-9750G Plus, which needs
+                            about one bit period of idle between bytes.
+                            UARTE1 sends by EasyDMA with no gap at all,
+                            so the second stop bit is what supplies it.
+                            A GIII works with either. See UART_CONFIG.
    SINGLE_SENSOR        0   1 = report one sensor only. The simplest
                             first test.
    USE_ACCELEROMETER    1   1 = channel 3 is accelerometer X in
@@ -196,27 +222,33 @@
 // is a failure a learner cannot diagnose.
 //
 // *** IF THE SENSOR IS NOT FOUND, CHANNEL 3 READS 0. ***
-// NSN HAS NO STATUS FIELD in the value packet, so a missing sensor
-// cannot be signalled in-band. The USB banner says so at startup and
-// DIAG_CHANNEL3 = 1
-// will report it on the calculator. A flat zero from a missing
-// instrument is exactly the fault-resembling-a-result this project
-// warns about, and NSN cannot signal it in-band. Say so in the
-// worksheet.
+// A missing sensor is seen in the USB banner at startup and
+// DIAG_CHANNEL3 = 1 will report it on the calculator. A flat zero 
+// from a missing instrument is exactly the fault-resembling-a-result
+// this project warns about.
 // ===================================================================
 #define USE_ACCELEROMETER  1
 
 // ---- stop bits -----------------------------------------------------
 // CONFIG bit 4: 0 = one stop bit, 1 = two.
 //
-// ANSWERED, 5 AUGUST 2026: BOTH WORK.
+// ANSWERED 2026: BOTH WORK.
 //
 // One is kept as the default here because it is the minimum the
 // calculator requires and it is now known to work. Two is equally
 // valid and is what every other platform sends. Receiving is not
 // affected: the calculator's second stop bit is simply idle line to a
 // receiver expecting one.
-#define STOP_BITS_TO_CASIO 1
+// *** 2, NOT 1. THIS MATTERS FOR FX-9750G Plus SUPPORT. ***
+// uarte1_write hands the whole packet to EasyDMA, so the bytes leave
+// back to back with no gap at all. A G Plus refuses that: it needs
+// about ONE BIT PERIOD of idle line between bytes, and the second
+// stop bit is exactly that - 104 us at 9600 baud.
+// Measured2 026 on an ESP32 by changing only this bit:
+// 8N1 fails, 8N2 works, nothing else altered.
+// A GIII accepts either. Set this to 1 and G Plus support vanishes
+// silently while the GIII keeps working - the worst failure there is.
+#define STOP_BITS_TO_CASIO 2
 
 #if DEBUG_TRACE
   #define TRACE(x)      Serial.print(x)
@@ -368,7 +400,35 @@ void uarte1_begin() {
   NRF_UARTE1->ENABLE   = 8;
 }
 
+// ===================================================================
+// THE TURNAROUND DELAY - a 2007 lesson, relearned 2026
+// ===================================================================
+// The calculator does not switch from transmitting to listening
+// instantly. Reply into that turnaround and the first bits land while
+// its port is still changing direction: it mishears the byte and
+// answers 0x22, which reads as a wiring fault and is not one.
+//
+// Without a delay the trace read
+//     ATT 15  -> sent 13
+//     SHORT PACKET 1  bytes: 22
+// A GIII tolerates the fast reply. An FX-9750G Plus does not.
+//
+// It matters most on the SECOND and later samples, where our reply
+// follows the calculator drawing its display rather than following a
+// keypress - which is exactly when its port is least ready.
+//
+// Applied inside the write routines so a new code path cannot forget.
+// ===================================================================
+#define TURNAROUND_MS 5
+
+static inline void turnaround() {
+#if TURNAROUND_MS > 0
+  delay(TURNAROUND_MS);
+#endif
+}
+
 void uarte1_write(const uint8_t *data, uint8_t len) {
+  turnaround();
   if (len > sizeof(txBuf)) len = sizeof(txBuf);
   memcpy(txBuf, data, len);                 // into RAM - see above
 
@@ -504,8 +564,7 @@ uint8_t calculate_checksum(const uint8_t *packet) {
 // connector - so Wire cannot be pointed at them. The bus is driven
 // directly instead.
 //
-// BIT-BANGING IS CORRECT HERE AND WAS WRONG FOR THE SERIAL LINK, and
-// the difference is worth understanding rather than memorising. I2C
+// BIT-BANGING IS CORRECT HERE AND WAS WRONG FOR THE SERIAL LINK. I2C
 // has NO DEADLINE: the master drives the clock, so a pulse that
 // arrives late is simply a slower bus and nothing is lost. A UART bit
 // has a deadline every 104 microseconds and a late one corrupts the
@@ -943,7 +1002,7 @@ void handle_receive(uint8_t vname) {
     flush_line(); return;
   }
 
-  // == HOST-WAIT WINDOW: THE VALUE WINDOW (GAP 3) ==
+  // == FENTON 2025 HOST-WAIT WINDOW: THE VALUE WINDOW (GAP 3) ==
   // The heart of it. The calculator is inside Receive() waiting for a
   // number and it will wait - for five minutes if asked - without the
   // COM ERROR every reference says should follow.

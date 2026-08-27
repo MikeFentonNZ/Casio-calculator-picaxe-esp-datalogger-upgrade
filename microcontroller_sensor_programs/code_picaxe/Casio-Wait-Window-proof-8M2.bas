@@ -60,16 +60,43 @@
  - Pin C.1 <- from Casio TX [tip of 2.5mm TRS jack, YELLOW wire] (SERIN,
               and also the hardware hserin pin - see the header)
  - Pin C.1 -> 4.7k pull-up resistor to V+ (3.3 V) - REQUIRED
- - Pin C.2 Sensor 1 (analogue, readadc10) - NTC thermistor or LDR
- - Pin C.3 Sensor 2 (digital IN) - switch - magnetic/touch/impact  
- - Pin C.4 Sensor 3 (analogue, readadc10) - NTC thermistor or LDR OR
- 			  DS18B20 temperature sensor
+ - Pin C.1 -> 10k IN SERIES from the TIP, and a 1N5711 Schottky from
+            C.1 to V+, BAND toward V+
+            *** REQUIRED IF V+ IS 3.3 V AND YOU USE AN FX-9750G PLUS ***
+ - Pin C.2 -> RED LED   - locked
+ - Pin C.4 -> GREEN LED - unlocked
+ - Pin C.3    unused
  - 0V      -> Casio GND [sleeve of 2.5mm TRS jack, BLACK wire]
+
+
+  *** THE RECEIVE NETWORK - SETTLED 2026 ***
+  Use the universal interface. Four parts, one circuit, and it serves
+  both calculator generations on a 3.3 V board and on a 5 V board:
+
+      Casio TIP --+-- 4.7k --- 3.3 V     (the BOARD's own supply)
+                  |
+                  +-- 10k ---+--- GPIO 16
+                             |
+                             +--|<|--- 3.3 V   1N5711, BAND to 3.3 V
+
+ THE RECEIVE-SIDE CLAMP - separate from the 1N4148 above.
+ An FX-9750G Plus holds its transmit line at 4.75 V, measured. Run
+ this chip at 3.3 V and that lands above its own supply, so the 10k
+ limits the current to about 110 uA and the 1N5711 - 0.3 V forward -
+ conducts before the PIC's internal protection diode at 0.6 V and
+ takes the current first. Run the chip at 5 V (a PC USB port will do
+ it) and nothing exceeds the supply, so the Schottky never conducts
+ and costs nothing. An FX-9750GIII holds its line at 2.75 V and never
+ needs the clamp on either supply.
+ THE 10k IS IN SERIES ONLY. Nothing goes from C.1 to 0V: that makes a
+ divider, which drops a GIII's 2.75 V to about 1.8 V and breaks it.
+ Small-signal Schottky only - BAT85 or BAT43 will do, a 1N5817 will
+ not.  
 
  *** WHY A DIODE HERE AND NOT A SERIES RESISTOR ***
  The diode makes this an OPEN-DRAIN output: the PICAXE can only ever PULL
  THE LINE LOW. When it drives high the diode blocks, and the calculator
- raises the line with its own internal pull-up.  
+ raises the line with its own internal pull-up. Measured 15 Aug 2026.
 
   - The PICAXE supply no longer sets the calculator's high level, so the
     same wiring serves a 3.3 V FX-9750GIII and a 5 V FX-9750G Plus.
@@ -78,9 +105,12 @@
     up, which is what breaks the link.
   - BAR (cathode) TOWARD THE PICAXE. Reversed, nothing works.
 
- 1N4148 or 1N914. A Schottky is not required: the low sits near 0.6 V
- against a threshold near 0.82 V, and the drop falls as current falls.
- Verified on PICAXE, ESP8266, ESP32 and micro:bit V1/V2, 2026.
+ 1N4148 or 1N914 ON THE TRANSMIT LINE. A Schottky is not required in
+ THAT position: the low sits near 0.6 V against a threshold near
+ 0.82 V, and the drop falls as current falls. This says nothing
+ about the receive line, which is a different problem - see the
+ 1N5711 note above.
+ Verified on PICAXE with an FX-9750G Plus and an FX-9750GIII, 2026.
 
 ===============================================
 #ENDREM

@@ -1,13 +1,12 @@
 /*
  ===================================================================
-  CASIO FX-9750 <-> ESP8266 (Wemos D1 mini) NSN DATALOGGER
+  CASIO FX-9750 <-> ESP8266   NSN DATALOGGER
   Normalised scientific notation - ONE value per Receive(, SIGNED.
-  and diagnostic webserver DEMONSTRATION
 
  (C) Michael Fenton, MRSNZ, 2026
  Licence: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International 
- (CC BY-NC-SA 4.0)
- 
+ (CC BY-NC-SA 4.0)  
+
  Two RECEIVE() windows (GAP 1 and GAP 2) discovered 2007/2008
  using Picaxe 18X connected to a Casio FX-9750G Plus. See the author's
  New Zealand Ministry of Education E-Learning Fellowship report and 
@@ -17,35 +16,32 @@
  2) RIGEL - Learning From Life, Kuala Lumpur (2009): https://doi.org/10.5281/zenodo.19334228
 
  https://mikefentonnz.github.io/projects/casio-calculator-data-logger-hack.html
-
  ================================================================= 
- Version 1.0; 03/03/2026
+ Version 1.0; 03/12/2025
  (Update of Picaxe 2.0 rework 10/10/2025,
   original version 1.0 code for Picaxe 18X invented 2007)
 
  Ported from Casio-NSN-14M2.bas (PICAXE 14M2), which was
- bench-validated in 2025 / 2026 with 0% packet failure.
+ bench-validated in 2025 / reconfirmed 2026 with 0% packet failure.
 
   *** STATUS: PROOF OF CONCEPT - A FOUNDATION TO BUILD ON ***
+  Validated against an FX-9750GIII and FX-9750G Plus: 
+  Receive(N), Send(T), then repeated
+  Receive(A)/(B)/(C) sampling at a set interval, values landing in the
+  calculator's Lists across multiple samples. The ESP8266 is the second
+  validated platform.
+
  This is a reference implementation based on a validated method.
  It is deliberately minimal so that every line can be read and
  understood. It is NOT a finished classroom product and will not
- suit every use case. MODIFICATION IS EXPECTED. 
- For example,  up to 3 sensors, read synchronously but delivered 
- as consecutive seperate RECEIVE() values.
+ suit every use case. MODIFICATION IS EXPECTED.
 
  The webserver includes lots of diagnostic data; instead show a chart
- of sensor readings once this code is trusted based on 0% errors.
-
- Bench testing and classroom use in 2008, updated coding and testing
- in 2025 & 2026, all returned 0% packet failure and 0% COM error across  
- sampling intervals from 1 second to 5 minutes, with data logging up to 3 
- hours. Estimated packets transmitted in total 100,000+ in 600+ logging 
- sessions. 
+ of sensor readings once this code is trusted based on 0% errors. 
  ===================================================================
   THE ESP8266 PROBLEM, AND HOW THIS BUILD SOLVES IT
  ===================================================================
-  The ESP8266 has exactly ONE analogue input. Not three.
+  The ESP8266 has exactly ONE analogue input. Not three. One.
 
   That looks fatal for a three-sensor logger, and it is the reason
   the ESP8266 is often written off for this kind of work. The usual
@@ -71,13 +67,40 @@
 
   THE ANALOGUE PIN IS A0, AND IT IS THE ONLY ONE.
   There is no second analogue pin hiding anywhere on this board.
+
  ===================================================================
- STUDENT / TEACHER WARNING!
+  Consecutive RECEIVE() requests 
  ===================================================================
- - NEVER use boiling water for temperature calibration (it is NOT needed)
- - NEVER connect mains electricity (240 V / 110 V) to the calculator,
-   to this board, or to any sensor wiring. 
- - NEVER use mains-connected equipment near water.
+  Each sensor is sent as its OWN value, in its own Receive(
+  transaction, in normalised scientific notation. The calculator
+  stores what arrives straight into a List:
+
+      Receive(N)   how many sensors    -> N
+      Send(T)      the interval        -> T
+      Receive(A)   sensor 1            -> List 2
+      Receive(B)   sensor 2            -> List 3   (only if N > 1)
+      Receive(C)   sensor 3            -> List 4   (only if N > 2)
+
+  SIGNED VALUES ARE NATIVE. Byte 14 of the value packet is the
+  sign/info byte: bit 0 says the magnitude is >= 1, and bits 6 and 4
+  together say NEGATIVE. So -12.5 travels as a negative number and
+  arrives as one. 
+
+  A fourth RECEIVE(D) could act as a diagnosttic status indicator
+
+  If a DS18B20 is not connected a 0 reading may be a fault or
+  mistaken for a genuine zero degress.
+  The Picaxe BASIC code checked the one-wire serial number to detect
+  if a DS18B20 was disconnected if configuration code said it was present.
+
+  Not enabled here yet...
+
+ ===================================================================
+  WARNING
+ ===================================================================
+  NEVER connect mains electricity (240 V / 110 V) to the calculator,
+  to this board, or to any sensor wiring. NEVER use mains-connected
+  equipment near water.
 
   *** THE A0 VOLTAGE LIMIT IS NOT THE ONE YOU EXPECT ***
   The bare ESP8266 chip reads 0 to 1.0 V ONLY. Feeding it 3.3 V
@@ -88,60 +111,27 @@
   before you connect anything.
 
   Modern Casio calculators are 3 - 3.3 V logic, which matches the
-  ESP8266 directly. Keep the 1N4148 diode listed below in place.
- ===================================================================
-
- Checksum independently derived and confirmed by Grindheim (2001). Grindheim 
- documents exactly one timeout - 0.5 to 1 second for the device to answer the 
- opening 0x15 message from the Casio. This strict timeout at the handshake was 
- reasonably, and wrongly, assumed to be time-critical by the wider community. His
- work was also done from a PERSONAL COMPUTER, which accounts for most of what his
- work does not cover. A PC has a deep buffer, an operating system, and no reason
- to want a pause mid-transaction. A microcontroller inverts all of that.
-
- The Casio host-wait-windows (GAP 1-4) were not discovered by something that failed
- but by methodically driving the encoding deliberately to its extremes. 
- A similar methodology has been applied to all derivative works by the author in
- the porting to other microcontroller platforms for data logging applications.
- 
- Detailed documentation now provides all steps and methods for Casio serial 
- communication with a microcontoller for data logging, remote control, industrial 
- measurement and control (IMC) simulation, and as a Human Machine Interface. 
- 
- Limits and rules for coding and data transmission come with exhaustive evidence 
- filling in all details of what was previously unknown and/or undocumented.
- =================================================================
-
-  This program demonstrates the two complementary uses of the
-  nsn packets:
-
-  1. RECEIVE direction (Casio requests data from the ESP32):
-     - Casio RECEIVE(A) requests Sensor 1 reading (thermistor)
-     - Casio RECEIVE(B) requests Sensor 2 reading (LDR)
-     - Casio RECEIVE(C) requests Sensor 3 reading (ultrasonic)
-
-  2. SEND direction (Casio pushes values to the ESP32):
-     - Casio SEND(N) requests sensor count (returns 3)
-
+  ESP8266 directly. Keep the resistors and diodes below in place.
  ===================================================================
   HARDWARE (Wemos D1 mini) - Wire colours users choice
-  A SB-62 cross-over cable has male 2.5mm TRS plugs at both ends.
   -----------------------------------------------------------------
   THERE ARE TWO WIRINGS. Which one applies is set by
   CASIO_TRANSPORT_UART below. Wire to match the setting, or the
   board will simply sit there saying nothing.
 
-  ---- CASIO_TRANSPORT_UART 0 : SoftwareSerial  ----
+  ---- CASIO_TRANSPORT_UART 0 : SoftwareSerial (the 2026 build) ----
   - GPIO 14 (D5) -> to Casio RX   [RING of 2.5mm TRS, BLUE wire]
-                    via via 1N4148 diode, bar towards Wemos
+                    via 1N4148 diode, bar towards Wemos
   - GPIO 12 (D6) <- from Casio TX [TIP of 2.5mm TRS, YELLOW wire]
-  - GPIO 12 (D6) -> 4.7k pull-up resistor to 3.3 V  *** REQUIRED ***
+  - GPIO 12 (D6) -> 10k IN SERIES to the pin  *** REQUIRED ***
+                    plus 4.7k pull-up and a 1N5711 - see below
   - GPIO 13 (D7) -> DS18B20 data, with 4.7k pull-up to 3.3 V
 
   ---- CASIO_TRANSPORT_UART 1 : hardware UART0 (for WiFi work) ----
   - GPIO 15 (D8) -> to Casio RX   [RING, BLUE]  via 1N4148, BAR to board
   - GPIO 13 (D7) <- from Casio TX [TIP, YELLOW]
-  - GPIO 13 (D7) -> 4.7k pull-up resistor to 3.3 V  *** REQUIRED ***
+  - GPIO 13 (D7) -> 10k IN SERIES to the pin  *** REQUIRED ***
+                    plus 4.7k pull-up and a 1N5711 - see below
   - GPIO 14 (D5) -> DS18B20 data, with 4.7k pull-up to 3.3 V
 
      *** D8 AND THE BOOT PROBLEM - READ THIS ***
@@ -149,7 +139,10 @@
      the instant the board powers up or the ESP8266 will not start.
      The D1 mini has a pull-down fitted for exactly this reason, and
      the 1N4148 to the calculator keeps the calculator from overriding
-     it. Proven to boot normally.
+     it. The diode does this BETTER than the 1k it replaced: its 0.6 V
+     forward drop subtracts from the calculator's pull-up before any
+     current can reach D8, so D8 sits LOWER at boot than it did with
+     the resistor. Tested 2025 - boots normally.
 
      If the board stops booting once the cable is attached: unplug
      the calculator, power up, then plug in. If that cures it, add
@@ -161,13 +154,48 @@
      UART0 lives on the USB pins for the whole upload. swap() does
      not move it to D8/D7 until setup() runs, which is after the
      board has booted, so the calculator never sees a byte of the
-     upload.
+     upload. 
 
-     This matters more than it sounds It shortens the edit-flash-test
-     loop, which is most of what debugging actually is.
+     This matters more than it sounds. A 2.5mm jack does not enjoy
+     being cycled, and a class set gets unplugged hundreds of times
+     over a term. It also shortens the edit-flash-test loop, which
+     is most of what debugging actually is.
+
+  *** THE RECEIVE NETWORK - SETTLED 2026 ***
+  Use the universal interface. Four parts, one circuit, and it serves
+  both calculator generations on a 3.3 V board and on a 5 V board:
+
+      Casio TIP --+-- 4.7k --- 3.3 V     (the BOARD's own supply)
+                  |
+                  +-- 10k ---+--- RX pin
+                             |
+                             +--|<|--- 3.3 V   1N5711, BAND to 3.3 V
+
+  WHY: an FX-9750G Plus holds its transmit line at 4.75 V, measured.
+  That is above a 3.3 V pin's supply, so the 10k limits the current to
+  about 110 uA and the Schottky - 0.3 V forward - conducts before the
+  chip's own protection diode at 0.6 V and takes the current first.
+  An FX-9750GIII holds its line at 2.75 V, so on a 3.3 V board the
+  Schottky never conducts and the pull-up does the work. On a 5 V
+  board the 4.7k goes to +5 V instead and lifts the GIII's 2.75 V to
+  about 3.9 V, clearing a 5 V input's 3.0 V threshold.
+
+  THE 10k IS IN SERIES ONLY - nothing goes from the pin to GND.
+  An earlier build here used a 10k/20k divider to ground. It works on
+  a 3.3 V board and both calculators logged with it, but it is NOT a
+  general answer: a GIII through that divider gives about 1.8 V, below
+  a 5 V input's threshold entirely. The circuit above replaces it and
+  is what the manual, the website and the diagram now specify.
+  Use a SMALL-SIGNAL Schottky - BAT85 or BAT43 will do. NOT a 1N5817:
+  power Schottkys leak enough to lift the LOW level.
 
   BOTH WIRINGS:
   - GND          -> Casio GND     [SLEEVE of 2.5mm TRS, BLACK wire]
+
+     NOTE ON THE JACK: a 2.5mm TRS plug has three parts - TIP,
+     RING and SLEEVE, in that order from the end. The tip and the
+     sleeve are different contacts. Ground is the SLEEVE, the one
+     nearest the cable.
 
   SENSORS (unchanged by the transport setting):
   - A0           -> analogue sensor  (channel 2) - THE ONLY ADC PIN
@@ -176,8 +204,10 @@
   - GPIO 2  (D4) -> built-in LED, and the debug output when the
                     hardware UART is carrying the calculator
 
+  An SB-62 cross-over cable has male 2.5mm TRS plugs at both ends.
+
  ===================================================================
-  FOUR THINGS THAT BITE ON THE ESP8266 AND NOT ON THE ESP32
+  FOUR THINGS TO BE AWARE OF ON THE ESP8266 AND NOT ON THE ESP32
  ===================================================================
 
   1. THE WATCHDOG WILL RESET THE BOARD IF YOU LET IT.
@@ -211,6 +241,13 @@
      span. Single readings, no averaging. That is far less than the
      paragraph above would lead you to expect.
 
+     Treat it as an upper bound rather than a figure. One count is
+     the quantisation limit, so a value sitting near a code boundary
+     will flip by one with no real change at all, and a single
+     analogRead() cannot tell the two apart. Averaging sixteen
+     readings would settle it, and would also be the right thing to
+     do in any build that cares about the third digit.
+
      The practical conclusion: on this board the radio's effect on
      the ADC is at or below one count, which is negligible for
      classroom measurement. Average anyway if the reading matters.
@@ -221,7 +258,7 @@
      counts to volts yourself, using the divider ratio.
 
  ===================================================================
-  SIGNED VALUES
+  SIGNED VALUES ARE NATIVE - NO OFFSET
  ===================================================================
   Byte 14 of the value packet is the sign/info byte:
       bit 0        the magnitude is >= 1
@@ -229,9 +266,7 @@
   So 0x01 is a positive number and 0x51 a negative one.
 
   A DS18B20 below freezing travels as a negative number and arrives
-  as one. NO OFFSET IS APPLIED ANYWHERE IN THIS BUILD, and no Casio
-  program reading this logger has to add or subtract anything.
-
+  as one. 
  ===================================================================
   *** WHAT TO CHANGE - this code is a starting point ***
  ===================================================================
@@ -264,7 +299,7 @@
                                      0 = SoftwareSerial on D5/D6
                                      MUST match how you have wired it.
 
-   WIFI_ENABLED            0         1 = the board makes its own
+   WIFI_ENABLED            1         1 = the board makes its own
                                      network, so phones can watch.
                                      0 = radio off entirely.
 
@@ -275,7 +310,7 @@
    AP_SSID / AP_PASSWORD             Network name and password. Give
                                      each unit its own name.
 
-   DEBUG_TRACE             0         1 = protocol bytes to Serial1
+   DEBUG_TRACE             1         1 = protocol bytes to Serial1
                                      (D4). Costs the status LED.
 
    DIAG_HEAP_ON_CH3        0         1 = channel 3 reports the board's
@@ -294,42 +329,41 @@
                                      headings. Edit to match what you
                                      actually connected.
 
- ===================================================================
-  WHAT HAS BEEN TESTED, AND WHAT HAS NOT
- ===================================================================
-  PASSED
-    Handshake, sensor count, then one value per Receive(
-    2-second interval, 470 samples, radio and web server running
-    5-minute interval, 1 hour, radio and web server running
-    Ten page refreshes at sample rate, no readings lost
-    CSV downloads complete and well formed on an Android phone
-    Free memory flat across a 470-sample run - no leak
-    Calculator may stay connected while the board is reprogrammed
-    Behaviour when the calculator's lists fill at 999 readings
-
-  NOT YET TESTED - do not assume these work
-    More than TWO clients at once (two proven; ~4 is an estimate)
-    A real DS18B20 on this board, including below zero
-    Recovery after the cable is pulled mid-session
-    Runs longer than one hour
-
+ =================================================================
   KNOWN LIMITS
+ =================================================================
     About four phones is the most an ESP8266 access point holds -
       an estimate, not a measurement; two is what has been shown
     A long run needs fresh calculator batteries - see below
-    300 seconds is the longest sampling interval this code allows
+    300 seconds is the longest sampling INTERVAL this code allows
+    but sampling sessions have been successful over hours.
 
  ===================================================================
   THE FAILURE THAT WILL NOT LOOK LIKE ITSELF
  ===================================================================
   LOW CALCULATOR BATTERIES PRESENT AS A COMMUNICATIONS FAULT.
-  The display is still bright, the keys still work, and the
-  logger stops with a Com ERROR.
+
+  The calculator's transmit line is a HIGH-IMPEDANCE source - about
+  5k - though its voltage is fine: a steady 2.75 V measured during a
+  host-wait window, 15 Aug 2026. (An earlier note here said "about
+  1.4 V at idle". WITHDRAWN - that was a multimeter averaging a line
+  switching between 0 V and 2.75 V.) The 4.7k pull-up is required
+  because the port goes HIGH IMPEDANCE when not in use, and without
+  it the line floats to 0 V - a permanent break condition. As
+  the cells fall, that drive weakens further, and THE LINK FAILS
+  BEFORE ANYTHING ELSE ABOUT THE CALCULATOR LOOKS WRONG. The display
+  is still bright, the keys still work, and the logger stops with a
+  Com ERROR.
 
   If a session stops early and nothing in the panel explains it,
   change the batteries before you change anything else.
 
-  THERE IS NO EARLY WARNING. The failure is ABRUPT. 
+  THERE IS NO EARLY WARNING. The failure is ABRUPT. The error counters
+  do not climb first - timeouts, bad checksums, short packets and
+  stray bytes all stay at zero right up to the moment the calculator
+  shows Com ERROR. Nothing in software sees it coming, which is why
+  this note exists instead of a counter.
+
  ===================================================================
   THE DESIGN PRINCIPLE THIS FILE IS BUILT ON
  ===================================================================
@@ -358,29 +392,22 @@
     I fixed at 1          any other value is visible on the display
                           and proves the frame is wrong.
 
-    flag codes 10-99      code 01 was lost by the calculator and
-                          arrived as 00, which means "all well". A
-                          saturated sensor reported as healthy. No
-                          code can now decay into the healthy value.
-
     the clamp record       a clamped channel is shown on the web
                           arrive together or not at all. Sent as
                           three separate transactions, a failure in
                           the third misaligns the lists permanently
                           and nothing anywhere records it.
 
-    the counters          every fault found in August 2026 was found
+    the counters          every fault found in 2026 was found
                           by arithmetic on them, not by reading code.
 
   IF YOU EXTEND THIS FILE: prefer a loud failure to a quiet one, even
   at the cost of stopping. Where a failure cannot be loud, make it
-  countable. Prefer properties of the ENCODING to properties of the
-  implementation - atomicity that follows from the format cannot be
-  lost by a careless port. And do not add defensive code against
+  countable. And do not add defensive code against
   faults nobody has observed: it is untested, it hides the mechanism
   a learner is meant to read, and it does not make anything visible.
- ===================================================================
 
+ ===================================================================
 */
 
 #include <ESP8266WiFi.h>      // radio control, and the access point
@@ -414,7 +441,7 @@
 // WHICH SERIAL PORT CARRIES THE CALCULATOR
 //
 //   0 = SoftwareSerial on D5/D6. The configuration validated in
-//       August 2026 with the radio OFF. Leaves the USB serial
+//       2026 with the radio OFF. Leaves the USB serial
 //       monitor free for debugging. Use this build for teaching and
 //       for any run where the record matters.
 //
@@ -481,7 +508,7 @@
 // Set back to 0 when you are done. Channel 3 then returns to being a
 // sensor, and nothing else in the program has changed.
 // ===================================================================
-#define DIAG_HEAP_ON_CH3 1
+#define DIAG_HEAP_ON_CH3 0
 
 // ===================================================================
 // THE RADIO
@@ -617,11 +644,11 @@
   // Those pins are not a choice - the silicon decides them. The
   // DS18B20 moves to D5, which SoftwareSerial has just given up.
   #define CASIO_TX_PIN   15   // D8 -> Casio RX (blue, ring) via 1N4148, BAR to board
-  #define CASIO_RX_PIN   13   // D7 <- Casio TX (yellow, tip) + 4.7k
+  #define CASIO_RX_PIN   13   // D7 <- Casio TX (yellow, tip) via divider
   #define ONEWIRE_PIN    14   // D5 -- DS18B20 data          (channel 1)
 #else
   #define CASIO_TX_PIN   14   // D5 -> Casio RX (blue, ring) via 1N4148, BAR to board
-  #define CASIO_RX_PIN   12   // D6 <- Casio TX (yellow, tip) + 4.7k
+  #define CASIO_RX_PIN   12   // D6 <- Casio TX (yellow, tip) via divider
   #define ONEWIRE_PIN    13   // D7 -- DS18B20 data          (channel 1)
 #endif
 
@@ -672,10 +699,6 @@ const uint8_t VALUE_PACKET_LEN   = 16;
 // 50-byte REQUEST that asks for a reading, and the 16-byte VALUE
 // packet that carries the logging interval from the calculator.
 //
-// It was called REQUEST_CHECKSUM_STRICT until 7 August 2026, which
-// named one of the two and was quietly wrong about the other. If you
-// have notes or an older sketch using the old name, this is it.
-//
 // ---- WHAT IT CATCHES THAT NOTHING ELSE DOES --------------------
 // The length test catches a truncated packet. The preamble test
 // catches most desynchronisation. What survives both is a 50-byte
@@ -694,16 +717,6 @@ const uint8_t VALUE_PACKET_LEN   = 16;
 // reading lost, loudly. That is the trade this project has already
 // made everywhere else.
 //
-// ---- WHY IT SHIPPED AT 0, AND WHAT CHANGED --------------------
-// The checksum rule was originally verified only against packets
-// this board TRANSMITS - the end, description and value packets.
-// The request comes the other way. Had the calculator computed its
-// checksum over a different range of bytes than assumed here, strict
-// mode would have rejected EVERY transaction and the logger would
-// have been completely dead - a worse failure than the one it
-// prevents. So it shipped at 0, counting without acting, with an
-// evidence condition attached.
-//
 // ---- IT IS EXPECTED NEVER TO FIRE ------------------------------
 // Bench experience suggests the only noise this link sees comes from
 // LOW CALCULATOR BATTERIES, and that failure already announces
@@ -711,9 +724,9 @@ const uint8_t VALUE_PACKET_LEN   = 16;
 // mode is therefore insurance against a case not yet observed, and
 // it costs nothing while that remains true.
 //
-// The evidence is from two calculator models. The rule agrees with
-// Grindheim's for the CFX-9950G, and the author's tests with the 
-// FX-9750G Plus.
+// The evidence is from ONE calculator model. The rule agrees with
+// Grindheim's for the CFX-9950G, but that is his measurement, not
+// one made here.
 //
 // IF IT EVER FIRES:
 //   * Bad checksum climbing while logging is otherwise fine
@@ -740,7 +753,6 @@ const uint8_t VALUE_PACKET_LEN   = 16;
 // observable while it happens.
 // ===================================================================
 #define RX_CHECKSUM_STRICT 1
-
 
 
 const uint8_t CASIO_PREAMBLE  = 0x3A;   // ':' starts every packet
@@ -873,6 +885,58 @@ const uint32_t FINAL_READ_MS         = 50;   // collect them here
 #else
   SoftwareSerial CasioSerial;
 #endif
+
+// ===================================================================
+// THE TURNAROUND DELAY  -  a 2007 lesson, relearned twice
+// ===================================================================
+// The calculator does not switch from transmitting to listening
+// instantly. Reply into that turnaround and the first bits land while
+// its port is still changing direction: it mishears the byte and
+// answers 0x22.
+//
+// Found on a PICAXE in 2007. 
+// An ESP32 answers an FX-9750G Plus fast enough to trip it.
+// MEASURED 2026. Without this delay the trace reads:
+//     ATT 15  -> sent 13
+//     SHORT PACKET 1  bytes: 22
+// The calculator rejected our $13 and never sent the request packet.
+// A GIII tolerates the fast reply; a G Plus does not.
+//
+// Applied INSIDE every send so a new code path cannot forget it.
+// ===================================================================
+#define TURNAROUND_MS 5
+
+static inline void turnaround() {
+#if TURNAROUND_MS > 0
+  delay(TURNAROUND_MS);
+#endif
+}
+
+// ===================================================================
+// SENDING A PACKET
+// ===================================================================
+// One bulk write. The UART decides the spacing, and that is correct
+// on this platform - SEE THE STOP-BIT NOTE IN setup().
+//
+// The FX-9750G Plus needs about one bit period of idle between bytes.
+// 8N2 supplies it in the framing, so nothing has to be added here.
+// A board that CANNOT send two stop bits has to add the gap by hand:
+// the PICAXE builds emit one byte at a time, and the Arduino Uno
+// build uses an explicit ~104 us delay, because neither an 08M2
+// EUSART nor SoftwareSerial can be told to send 8N2.
+//
+// AN EARLIER VERSION OF THIS FILE PACED THE BYTES HERE. It was
+// unnecessary - the stop bit was already doing the work - and it cost
+// ~134 ms of BUSY-WAIT per transaction, during which loop() never ran
+// and the web server was unreachable. Removed 2026.
+//
+// *** IF YOU CHANGE THE FRAMING TO 8N1, THIS ROUTINE MUST PACE. ***
+// ===================================================================
+static void casio_send_packet(const uint8_t *buf, size_t len) {
+  turnaround();
+  CasioSerial.write(buf, len);
+}
+
 OneWire           oneWire(ONEWIRE_PIN);
 DallasTemperature ds18b20(&oneWire);
 Adafruit_BME280   bme;
@@ -966,7 +1030,7 @@ uint16_t historyHead  = 0;     // where the next sample goes
 // a device that acts on an unclamped number arriving over a wire is a
 // device that can be stopped by a typing error.
 //
-// MIN_INTERVAL_S WAS 2 UNTIL 7 AUGUST 2026. It is now 1.
+// MIN_INTERVAL_S WAS 2. It is now 1.
 //
 // WHERE A SECOND ACTUALLY GOES. One Receive() transaction moves about
 // 165 bytes - the 50-byte request in, the description and 16-byte
@@ -1040,7 +1104,7 @@ LinkStats stats = {};
 // ===================================================================
 // HOW LONG DOES THE CALCULATOR ITSELF TAKE?
 // ===================================================================
-// Added 7 August 2026. This measures something no part of this
+// Added 2026. This measures something no part of this
 // project could measure before: THE CASIO'S OWN LOOP TIME. Not the
 // link, not this board - the calculator finishing Receive(, decoding
 // the value it received, writing a list element,
@@ -1175,13 +1239,6 @@ int16_t scale_to_physical_2() {
 // Relative humidity in tenths of a percent: 0 to 1000. Fits easily,
 // and needs no convention of its own - a good place to start.
 //
-// WHY NOT PRESSURE? Try it and see what happens - it is instructive.
-// Atmospheric pressure is about 1013.2 hPa, which in tenths is
-// 10132. That is LARGER THAN 9999, so it does not fit in a field at
-// all. clamp_to_range() will peg it and raise the alarm flag rather
-// than let it carry into channel 2 - which is exactly what that
-// clamp is there for.
-//
 // THE FIX IS THE SAME TRICK AS THE OFFSET ITSELF: move the origin.
 // Subtract 900 hPa before scaling, and add 900 back in the Casio
 // code. The block below is ready to use - swap the two returns.
@@ -1234,11 +1291,13 @@ int16_t scale_to_physical_3() {
   // return (int16_t)lroundf((hPa - 900.0f) * 10.0f);
 }
 
-// KEEP THE VALUE INSIDE WHAT THE PACKET CAN CARRY
+// ===================================================================
+// STAGE 3 of 4:  KEEP THE VALUE INSIDE THE FIELD
 //
-// A reading beyond range is clamped AND the clamp is recorded, so the
-// web page and the CSV can report it. A silent clamp is a lie the
-// size of the error.
+// If a reading is out of range we do NOT silently pretend it was at
+// the limit. We clamp it AND we record that we did, so the calculator 
+// is told. A silent clamp is a lie the size of the error.
+// ===================================================================
 int16_t clamp_to_range(int32_t value, uint8_t channel) {
   if (value >  NSN_MAX_VALUE) {
     saturatedMask |= (1 << channel);
@@ -1299,6 +1358,11 @@ static void fmt_hms(char *buf, size_t n, uint32_t secs) {
 // timeout, which is FIVE SECONDS by default. Fifteen of them in a
 // row leaves the board unresponsive long enough to miss the
 // calculator's attention byte, and logging stops with a COM ERROR.
+//
+// Observed 2026: three rows passed "" as their unit, the
+// page ended silently at the first of them, and the link died
+// roughly two minutes later. One empty string, two symptoms, and
+// neither of them pointing at the cause.
 //
 // send() guards every string, so the mistake cannot be made again
 // by editing the rows.
@@ -1509,11 +1573,8 @@ void handle_status_page() {
   // A board that restarts mid-session looks exactly like a board that
   // hung: the calculator shows a COM error either way, and every
   // counter here begins again from zero, which makes a five-minute
-  // run look like a two-minute one. On 4 August 2026 that cost an
-  // afternoon - the giveaway was that "bytes discarded" was exactly
-  // 38 x 54 when 153 samples had been taken. The board should not
-  // have to be caught out by arithmetic; it knows why it restarted,
-  // so it says so.
+  // run look like a two-minute one. 
+
   server.sendContent(F("<h2>Board</h2><table>"));
   row("Last restart", ESP.getResetReason().c_str(), "");
   rowNum("Free memory", ESP.getFreeHeap(), "bytes");
@@ -1760,7 +1821,7 @@ void send_nsn_value(int16_t signedValue) {
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0xFE
     };
-    CasioSerial.write(zeroPacket, 16);
+    casio_send_packet(zeroPacket, 16);
     return;
   }
 
@@ -1800,7 +1861,7 @@ void send_nsn_value(int16_t signedValue) {
   packet[14] = exponent;
   packet[15] = calculate_checksum(packet);
 
-  CasioSerial.write(packet, 16);
+  casio_send_packet(packet, 16);
   stats.valuePackets++;
 }
 
@@ -1833,7 +1894,7 @@ void send_description(uint8_t vname) {
 
   packet[49] = (uint8_t)(273 - vname);
 
-  CasioSerial.write(packet, 50);
+  casio_send_packet(packet, 50);
 }
 
 // ===================================================================
@@ -1847,7 +1908,7 @@ void send_end_packet() {
   packet[3] = 'D';
   for (uint8_t i = 4; i <= 48; i++) packet[i] = 0xFF;    // 45 bytes
   packet[49] = 0x56;
-  CasioSerial.write(packet, 50);
+  casio_send_packet(packet, 50);
   stats.endPackets++;
 }
 
@@ -1856,12 +1917,16 @@ void send_end_packet() {
 //
 // Every path that gives up on a transaction must leave the line
 // EMPTY. If it does not, the bytes it walked away from are read one
-// at a time by the next pass of loop(), and the board spends the
-// following transactions one packet behind. A single
-// glitch becomes a cascade, and the Com ERROR arrives minutes later
-// with nothing to connect it to.
+// at a time by the next pass of loop(), each one counted as an
+// unexpected byte, and the board spends the next several transactions
+// one packet behind. A single glitch becomes a cascade.
 //
-// Silence is the right signal HERE, unlike the drain, because we do
+// That is how 0x56 - byte 5 of a request header - kept appearing
+// where an attention byte belongs, even after the drain itself was
+// made exact. The drain was correct; the paths that skipped it were
+// not.
+//
+// Silence is the right signal here, unlike the drain, because we do
 // NOT know how many bytes are left - the whole point is that
 // something unexpected happened.
 // ===================================================================
@@ -1984,7 +2049,7 @@ void wait_for_interval() {
   // If we have somehow fallen a whole interval behind, resynchronise
   // rather than sprinting to catch up.
   //
-  // COUNTED SINCE 7 AUGUST 2026. This branch used to fire silently,
+  // This branch used to fire silently,
   // which made "the calculator cannot keep up at this interval" a
   // thing you had to notice with a stopwatch. It is the ONE symptom
   // of an interval set shorter than the calculator's own loop, so it
@@ -2001,6 +2066,7 @@ void wait_for_interval() {
 void handle_receive(uint8_t vname) {
   uint8_t b;
 
+  turnaround();
   CasioSerial.write(CASIO_ACK);
 
   // A TIMEOUT and a WRONG BYTE are not the same thing, and the PICAXE
@@ -2018,7 +2084,9 @@ void handle_receive(uint8_t vname) {
   TRACE(F("ACK1 ok  "));
 
   // == HOST-WAIT WINDOW: THE DESCRIPTION WINDOW (GAP 2) ==
-  // Pausing here during RECEIVE does not trigger a COM ERROR. 
+  // Pausing here during RECEIVE does not trigger a COM ERROR. This
+  // window was the one found in 2007 and used in the 2008 classroom
+  // trials to wait for a student to press a key.
   //
   // INTERVAL LOGGING COULD EQUALLY HAVE BEEN BUILT HERE. The value window is
   // used instead, and the reason is DATA FRESHNESS: the value window sits
@@ -2048,14 +2116,16 @@ void handle_receive(uint8_t vname) {
   // five minutes if we ask it to - without raising the COM ERROR
   // that every reference says should happen. That patience is what
   // turns a calculator into a datalogger.
-  // NO CEILING HAS BEEN ESTABLISHED.
-
-  // *** THE INTERVAL WAIT BELONGS TO CHANNEL A ONLY. ***
-  // A, B and C are three transactions within ONE sample. Waiting in B
-  // or C as well would multiply the interval by the number of sensors
-  // and stretch the time axis silently. All three sensors are read
-  // together inside wait_for_interval(), so B and C return values
-  // taken at the same instant as A.
+  //
+  // Five minutes is the SPECIFIED limit, not the observed one.
+  // Pauses of up to three hours have succeeded. Shorter maxima were
+  // recorded afterwards - around an hour - and were long read as the
+  // protocol behaving inconsistently. They were not: the calculator's
+  // cells had never been changed after the three-hour run, and a
+  // falling supply ends a session with a Com ERROR and no warning.
+  // NO CEILING HAS BEEN ESTABLISHED. 300 seconds is chosen with
+  // margin, and a successful long pause still does not make the next
+  // one safe - fit fresh cells before any long unattended run.
 
   if (vname == VNAME_N) {
     send_nsn_value((int16_t)SENSOR_COUNT);
@@ -2124,6 +2194,7 @@ uint16_t denormalise_value(uint8_t intDigit, uint8_t dec1, uint8_t dec2,
 // has to re-flash the board to change it.
 // ===================================================================
 void handle_incoming() {
+  turnaround();
   CasioSerial.write(CASIO_ACK);
 
   // ===============================================================
@@ -2143,9 +2214,17 @@ void handle_incoming() {
   //      next transaction.
   //
   //   3. It discarded the calculator's 50-byte END packet with
-  //      delay(80) and then read whatever had turned up. 
+  //      delay(80) and then read whatever had turned up. Fifty
+  //      bytes take 57 ms at 9600 baud with two stop bits, so that
+  //      was 23 ms of margin - the same fixed-delay pattern as the
+  //      drain that failed in 2026, with a larger cushion.
   //
-  // THE CALCULATOR ACCEPTS ONE STOP BIT. IT DOES NOT REQUIRE TWO.
+  // STOP BITS ARE MODEL-DEPENDENT - see the header.
+  //   FX-9750GIII:   8N1 and 8N2 both work.
+  //   FX-9750G Plus: 8N1 is REFUSED unless ~104 us of idle is added
+  //                  between bytes. 8N2 supplies that for free.
+  // Measured 2026 by changing only the framing bit.
+  // THIS BUILD DEPENDS ON SERIAL_8N2.
   // ===============================================================
 
   // --- the value packet: exactly 16 bytes -----------------------
@@ -2188,6 +2267,7 @@ void handle_incoming() {
   if (value > MAX_INTERVAL_S) value = MAX_INTERVAL_S;
   timeInterval = value;
 
+  turnaround();
   CasioSerial.write(CASIO_ACK);
 
   // --- the END packet: exactly 50 bytes, counted ----------------
@@ -2206,6 +2286,26 @@ void handle_incoming() {
 // SETUP
 // ===================================================================
 void setup() {
+  // 9600 baud, 8 data bits, no parity, TWO stop bits.
+  //
+  // *** 8N2 IS REQUIRED, NOT MERELY CUSTOMARY. ***
+  //
+  // FX-9750GIII:   8N1 and 8N2 both work.
+  // FX-9750G Plus: a gapless 8N1 stream is REFUSED. The calculator
+  //                needs about ONE BIT PERIOD - 104 us at 9600 - of
+  //                idle line between bytes, and a second stop bit is
+  //                exactly that. An explicit ~104 us inter-byte delay
+  //                does the same job; see casio_send_packet.
+  //
+  // MEASURED 2026 on an ESP32 by changing only the framing
+  // bit, bulk writes both times: 8N1 fails, 8N2 works. Confirmed on
+  // PICAXE and on an Arduino Uno, where the threshold was bisected to
+  // between 75 and 100 us.
+  //
+  // Grindheim (2001) reports the link as asymmetric - two stop bits
+  // FROM the calculator, one TO it and that remains true of what the
+  // calculator will PARSE. It is not the same statement as what it will
+  // accept in sequence.
 
 #if CASIO_TRANSPORT_UART
   // UART0 starts life on GPIO 1/3 (the USB pins) and carries the
@@ -2316,12 +2416,23 @@ void loop() {
   if (!CasioSerial.available()) {
     // ===============================================================
     // *** THE WEB SERVER IS NOT ALLOWED HERE DURING A SESSION. ***
-    // This gap contains the attention-byte handshake, where the
-    // calculator allows 0.5 to 1 second (Grindheim 2001) and the
-    // October 2025 search found a pause fails. Serve a file here and
-    // the attention byte goes unanswered for as long as it takes.
-    // Only serve when the calculator has been quiet for longer than
-    // two sampling intervals - which means no session is running.
+    //
+    // This is the gap between one transaction and the next, and it is
+    // the one place in the whole exchange where NO host-wait window
+    // has ever been demonstrated. The calculator sends its attention
+    // byte 0x15 and expects 0x13 straight back. Fenton's unbounded host wait
+    // covers the pause INSIDE Receive(), after the second ACK - not
+    // this handshake.
+    //
+    // Serve a 25 KB file here and the attention byte goes unanswered
+    // for as long as the download takes. That is a COM ERROR, and it
+    // was observed on 2026 before this guard existed.
+    //
+    // So: serve only when the calculator has been quiet for longer
+    // than two sampling intervals, which means no session is running
+    // and the board genuinely has nothing else to do. During a
+    // session the long wait inside wait_for_interval() - which IS
+    // inside the host-wait window - is the only place HTTP is served.
     // ===============================================================
     uint32_t quietMs = (uint32_t)timeInterval * 2000UL + 4000UL;
     if (millis() - lastExchangeMs > quietMs) {
@@ -2345,6 +2456,7 @@ void loop() {
 
   led(LED_ON);
 
+  turnaround();
   CasioSerial.write(ESP_PRESENT);
   TRACE(F("\nATT 15  -> sent 13\n"));
 
@@ -2360,6 +2472,9 @@ void loop() {
   // ===============================================================
   // READ THE WHOLE 50-BYTE REQUEST PACKET, THEN CHECK IT
   //
+  // The idea came from the 2025 micro:bit draft,
+  // which had it right: the packet is 50 bytes, so read 50 bytes.
+  //
   // WHY IT IS SAFER, AND NOT MERELY TIDIER:
   //
   //   The old code counted the 38-byte tail and recorded a
@@ -2367,7 +2482,12 @@ void loop() {
   //   had not arrived was acted upon. Here a packet that is not
   //   complete is not used at all.
   //
-  //   Having all 50 bytes means the CHECKSUM can be verified.
+  //   Having all 50 bytes means the CHECKSUM can be verified. The
+  //   calculator sends one; until now this code ignored it and
+  //   trusted the packet's shape instead. A desynchronised read -
+  //   almost never checksums, so this catches the condition rather 
+  //   than inferring it later from a byte that should have been an ACK.
+  //
   //   There is one length, one timeout and one buffer instead of
   //   two of each, so there are fewer indices to get wrong. The
   //   command is byte 1 and the variable name is byte 11, counted
@@ -2391,7 +2511,9 @@ void loop() {
 
   if (got != REQUEST_PACKET_LEN) {
     stats.shortPackets++;
-    TRACE(F("SHORT PACKET ")); TRACELN(got);
+    TRACE(F("SHORT PACKET ")); TRACE(got); TRACE(F("  bytes: "));
+    for (uint8_t d = 0; d < got; d++) { TRACEHEX(packet[d]); }
+    TRACELN(F(""));
     flush_line();
     led(LED_OFF);
     return;

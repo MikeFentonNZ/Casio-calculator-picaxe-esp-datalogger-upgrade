@@ -43,17 +43,9 @@
  =================================================================
  A SB-62 cross-over cable has male 2.5mm TRS plugs at both ends.
  
-  THE CALCULATOR ACCEPTS ONE STOP BIT. IT DOES NOT REQUIRE TWO.
-
-  Both settings were tested here and both work. That confirms
-  Grindheim (2001), who reported the link is asymmetric - two stop
-  bits FROM the calculator, one TO it.
-
-  WHY TWO ALSO WORKS: an extra stop bit is only extra idle line. The
-  receiver has already sampled the byte and is waiting for the next
-  start bit, which simply arrives a fraction later.
- 
-  It is incorrect to say that one stop bit is rejected.
+ SERIAL FORMAT: 9600 baud, 8N2. The calculator RECEIVES expecting
+ 2 stop bits; the PICAXE's bit-banged SEROUT plus its natural
+ between-byte processing time satisfies this.
  ===================================================================
  HARDWARE connections(Picaxe 08M2): Wire colours are users choice
 
@@ -62,15 +54,43 @@
  - Pin C.1 <- from Casio TX [tip of 2.5mm TRS jack, YELLOW wire] (SERIN,
               and also the hardware hserin pin - see the header)
  - Pin C.1 -> 4.7k pull-up resistor to V+ (3.3 V) - REQUIRED
+ - Pin C.1 -> 10k IN SERIES from the TIP, and a 1N5711 Schottky from
+            C.1 to V+, BAND toward V+
+            *** REQUIRED IF V+ IS 3.3 V AND YOU USE AN FX-9750G PLUS ***
  - Pin C.2 -> RED LED   - locked
  - Pin C.4 -> GREEN LED - unlocked
  - Pin C.3    unused
  - 0V      -> Casio GND [sleeve of 2.5mm TRS jack, BLACK wire]
 
+
+  *** THE RECEIVE NETWORK - SETTLED 2026 ***
+  Use the universal interface. Four parts, one circuit, and it serves
+  both calculator generations on a 3.3 V board and on a 5 V board:
+
+      Casio TIP --+-- 4.7k --- 3.3 V     (the BOARD's own supply)
+                  |
+                  +-- 10k ---+--- GPIO 16
+                             |
+                             +--|<|--- 3.3 V   1N5711, BAND to 3.3 V
+
+ THE RECEIVE-SIDE CLAMP - separate from the 1N4148 above.
+ An FX-9750G Plus holds its transmit line at 4.75 V, measured. Run
+ this chip at 3.3 V and that lands above its own supply, so the 10k
+ limits the current to about 110 uA and the 1N5711 - 0.3 V forward -
+ conducts before the PIC's internal protection diode at 0.6 V and
+ takes the current first. Run the chip at 5 V (a PC USB port will do
+ it) and nothing exceeds the supply, so the Schottky never conducts
+ and costs nothing. An FX-9750GIII holds its line at 2.75 V and never
+ needs the clamp on either supply.
+ THE 10k IS IN SERIES ONLY. Nothing goes from C.1 to 0V: that makes a
+ divider, which drops a GIII's 2.75 V to about 1.8 V and breaks it.
+ Small-signal Schottky only - BAT85 or BAT43 will do, a 1N5817 will
+ not.  
+
  *** WHY A DIODE HERE AND NOT A SERIES RESISTOR ***
  The diode makes this an OPEN-DRAIN output: the PICAXE can only ever PULL
  THE LINE LOW. When it drives high the diode blocks, and the calculator
- raises the line with its own internal pull-up.  
+ raises the line with its own internal pull-up. Measured 15 Aug 2026.
 
   - The PICAXE supply no longer sets the calculator's high level, so the
     same wiring serves a 3.3 V FX-9750GIII and a 5 V FX-9750G Plus.
@@ -79,9 +99,12 @@
     up, which is what breaks the link.
   - BAR (cathode) TOWARD THE PICAXE. Reversed, nothing works.
 
- 1N4148 or 1N914. A Schottky is not required: the low sits near 0.6 V
- against a threshold near 0.82 V, and the drop falls as current falls.
- Verified on PICAXE, ESP8266, ESP32 and micro:bit V1/V2, 2026.
+ 1N4148 or 1N914 ON THE TRANSMIT LINE. A Schottky is not required in
+ THAT position: the low sits near 0.6 V against a threshold near
+ 0.82 V, and the drop falls as current falls. This says nothing
+ about the receive line, which is a different problem - see the
+ 1N5711 note above.
+ Verified on PICAXE with an FX-9750G Plus and an FX-9750GIII, 2026.
 
 ==============================================
   THE CALCULATOR IS THE WHOLE INTERFACE
@@ -317,6 +340,10 @@ symbol SP_signInfo = 29
 symbol SP_exponent = 30
 symbol SP_dec1     = 31
 symbol SP_dec2     = 32
+symbol SP_PKT      = 40   ; 40-55: the 16-byte value packet is BUILT
+                          ; here and only then transmitted. See
+                          ; build_value_packet / emit_value_packet.
+symbol txByte      = b18  ; the byte put_byte sends. b18 was free.
 
 ' -----------------------------------------------------------------
 '  LOCK BEHAVIOUR - the numbers a class would change
@@ -359,7 +386,14 @@ symbol timerStart   = w7      ; b14,b15 when the current timer began.
 symbol rxWord       = w10     ; b20,b21 hserin target. MUST be a word:
 symbol rxLow        = b20     ;   hserin leaves it UNCHANGED on no data
 symbol pollGuard    = w11     ; b22,b23 poll_byte spin counter
-symbol POLL_GUARD   = 2500    ; ~2 s at m16
+symbol TURNAROUND   = 0       ; extra idle before every transmission,
+                              ; in quarter-ms at m16. 0 works on both
+                              ; an FX-9750G Plus and an FX-9750GIII.
+                              ; Raise to 20 (5 ms) if Com ERRORs are
+                              ; seen. The pause instruction still
+                              ; costs ~160 us even at 0, so the line
+                              ; is kept as a tuning point.
+symbol POLL_GUARD   = 6250    ; ~5 s at m16
 symbol lastSeen     = w12     ; b24,b25 time of last calculator contact
 
 ' =================================================================
@@ -397,11 +431,18 @@ main_loop:
   if rxLow <> CASIO_ATTENTION then main_loop
 
   lastSeen = time
+  pause TURNAROUND
   hserout 0, (PICAXE_PRESENT)
 
   serin FROM_CASIO_pin, T9600_16, (":"), command, inByte, inByte, inByte, inByte, inByte, inByte, inByte, inByte, inByte, vname
 
-  pause 200                   ; 50 ms at m16 - settling after serin
+  pause 300                   ; 75 ms at m16 - settling after serin.
+                              ; WAS 200 (50 ms). The serin above takes
+                              ; 12 bytes of a 50-byte packet; the other
+                              ; 39 need ~45 ms at 9600 8N2, so 50 ms
+                              ; leaves ~5 ms. A GIII fits inside that.
+                              ; AN FX-9750G Plus DOES NOT - tested
+                              ; directly, 2026.
 
   if command = CMD_RECEIVE then
     gosub handle_receive
@@ -560,6 +601,7 @@ poll_byte_got:
 '  THE CALCULATOR ASKS FOR A VALUE - answered immediately
 ' -----------------------------------------------------------------
 handle_receive:
+  pause TURNAROUND
   hserout 0, (CASIO_ACK)
 
   gosub poll_byte
@@ -611,6 +653,7 @@ build_status:
 '  PICAXE decides. See THE SECURITY LESSON in the header.
 ' -----------------------------------------------------------------
 handle_incoming:
+  pause TURNAROUND
   hserout 0, (CASIO_ACK)
   serin FROM_CASIO_pin, T9600_16, (CASIO_PREAMBLE), inByte, inByte, inByte, inByte, b19, b20, b21, b22, inByte, inByte, inByte, b23, b26, b27, checksum
   poke SP_intDigit, b19
@@ -618,6 +661,7 @@ handle_incoming:
   poke SP_dec2, b21
   poke SP_signInfo, b26
   poke SP_exponent, b27
+  pause TURNAROUND
   hserout 0, (CASIO_ACK)
 
   gosub decode_casio_value
@@ -680,22 +724,109 @@ decode_casio_value:
   return
 
 ' -----------------------------------------------------------------
+'  put_byte / build_value_packet / emit_value_packet
+'
+'  DUAL-GENERATION REQUIREMENT. An FX-9750G Plus refuses a packet
+'  whose bytes leave at uneven intervals, and answers $22. Every
+'  packet is therefore assembled FIRST and then sent by a loop whose
+'  cost is the same for every byte. Nothing is computed between the
+'  first byte and the last.
+'
+'  Do not unroll these loops, do not optimise the address arithmetic
+'  out of them, and never move a checksum calculation back inside a
+'  transmission. See FINDING-2026-08-21-uniform-emission.md.
+' -----------------------------------------------------------------
+put_byte:
+  hserout 0, (txByte)
+  return
+
+build_value_packet:
+  b22 = SP_PKT
+
+  for b19 = 0 to 4                  ; bytes 0-4 : ':' 00 01 00 01
+    lookup b19, ($3A, $00, $01, $00, $01), b26
+    poke b22, b26
+    b22 = b22 + 1
+  next b19
+
+  peek SP_intDigit, b26             ; byte 5
+  poke b22, b26
+  b22 = b22 + 1
+
+  peek SP_dec1, b26                 ; byte 6
+  poke b22, b26
+  b22 = b22 + 1
+
+  peek SP_dec2, b26                 ; byte 7
+  poke b22, b26
+  b22 = b22 + 1
+
+  b26 = 0                           ; bytes 8-12 : five $00
+  for b19 = 1 to 5
+    poke b22, b26
+    b22 = b22 + 1
+  next b19
+
+  peek SP_signInfo, b26             ; byte 13
+  poke b22, b26
+  b22 = b22 + 1
+
+  peek SP_exponent, b26             ; byte 14
+  poke b22, b26
+  b22 = b22 + 1
+
+  poke b22, checksum                ; byte 15
+  return
+
+emit_value_packet:
+  for b19 = 0 to 15
+    b22 = SP_PKT
+    b22 = b22 + b19
+    peek b22, txByte
+    gosub put_byte
+  next b19
+  return
+
+' -----------------------------------------------------------------
 '  THE DESCRIPTION PACKET
 ' -----------------------------------------------------------------
 send_description:
-  checksum = 273 - vname
-  hserout 0, (CASIO_PREAMBLE, $56, $41, $4C, $00, $56, $4D, $00, $01, $00, $01)
-  hserout 0, (vname)
-  hserout 0, ($FF, $FF, $FF, $FF, $FF, $FF, $FF)
-  hserout 0, ($56, $61, $72, $69, $61, $62, $6C, $65, $52, $0A)
-  hserout 0, ($FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF)
-  hserout 0, (checksum)
+  pause TURNAROUND
+  checksum = 273 - vname            ; every other byte is fixed
+
+  for b19 = 0 to 10                 ; ':' V A L 00 V M 00 01 00 01
+    lookup b19, ($3A,$56,$41,$4C,$00,$56,$4D,$00,$01,$00,$01), txByte
+    gosub put_byte
+  next b19
+
+  txByte = vname                    ; byte 11
+  gosub put_byte
+
+  txByte = $FF                      ; bytes 12-18
+  for b19 = 1 to 7
+    gosub put_byte
+  next b19
+
+  for b19 = 0 to 9                  ; "VariableR" + linefeed
+    lookup b19, ($56,$61,$72,$69,$61,$62,$6C,$65,$52,$0A), txByte
+    gosub put_byte
+  next b19
+
+  txByte = $FF                      ; bytes 29-48
+  for b19 = 1 to 20
+    gosub put_byte
+  next b19
+
+  txByte = checksum                 ; byte 49
+  gosub put_byte
   return
 
 ' -----------------------------------------------------------------
 '  THE VALUE PACKET
 ' -----------------------------------------------------------------
 send_value_packet:
+  pause TURNAROUND
+
   if currentValue = 0 then
     gosub send_zero_packet
     return
@@ -711,21 +842,27 @@ send_value_packet:
     b19 = b19 + 1
   endif
   poke SP_signInfo, b19
-  peek SP_intDigit, b19
-  hserout 0, (CASIO_PREAMBLE, $00, $01, $00, $01, b19)
-  peek SP_dec1, b19
-  peek SP_dec2, b20
-  hserout 0, (b19, b20, $00, $00, $00, $00, $00)
-  peek SP_signInfo, b19
-  peek SP_exponent, b20
-  hserout 0, (b19, b20)
-  gosub calculate_checksum
-  hserout 0, (checksum)
+
+  gosub calculate_checksum    ; FIRST - never mid-transmission
+  gosub build_value_packet
+  gosub emit_value_packet
   return
 
 send_zero_packet:
-  hserout 0, (CASIO_PREAMBLE, $00, $01, $00, $01, $00, $00, $00, $00, $00, $00, $00, $00)
-  hserout 0, ($00, $00, $FE)
+  pause TURNAROUND
+  ; 16 bytes: ':' 00 01 00 01, ten $00, then the constant $FE.
+  for b19 = 0 to 4
+    lookup b19, ($3A, $00, $01, $00, $01), txByte
+    gosub put_byte
+  next b19
+
+  txByte = $00
+  for b19 = 1 to 10
+    gosub put_byte
+  next b19
+
+  txByte = $FE
+  gosub put_byte
   return
 
 ' -----------------------------------------------------------------
@@ -814,9 +951,18 @@ calculate_checksum:
   return
 
 send_end_packet:
-  hserout 0, (CASIO_PREAMBLE, "E", "N", "D")
-  for b19 = 1 to 5
-    hserout 0, ($FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF)
+  pause TURNAROUND
+  ; 50 bytes: ':' E N D, 45 x $FF, then the constant $56.
+  for b19 = 0 to 3
+    lookup b19, ($3A, $45, $4E, $44), txByte
+    gosub put_byte
   next b19
-  hserout 0, ($56)
+
+  txByte = $FF
+  for b19 = 1 to 45
+    gosub put_byte
+  next b19
+
+  txByte = $56
+  gosub put_byte
   return

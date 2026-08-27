@@ -86,21 +86,38 @@
  to FX-9750 GIII (3V tolerant serial port).
  
  Modern (post 2020) Casio calculators are 3.3 V logic. 
+ ===================================================================
+ HARDWARE connections(Picaxe 08M2): Wire colours are users choice
 
  A SB-62 cross-over cable has male 2.5mm TRS plugs at both ends.
-
- HARDWARE connections(Picaxe 08M2): Wire colours are users choice
 
  - Pin C.0 -> to Casio RX [ring of 2.5mm TRS jack, BLUE wire] via 1N4148
  	      diode; bar to the picaxe  (HSEROUT)
  - Pin C.1 <- from Casio TX [tip of 2.5mm TRS jack, YELLOW wire] (SERIN,
               and also the hardware hserin pin - see the header)
  - Pin C.1 -> 4.7k pull-up resistor to V+ (3.3 V) - REQUIRED
+ - Pin C.1 -> 10k IN SERIES from the TIP, and a 1N5711 Schottky from
+            C.1 to V+, BAND toward V+
+            *** REQUIRED IF V+ IS 3.3 V AND YOU USE AN FX-9750G PLUS ***
  - Pin C.2 Sensor 1 (analogue, readadc10) - NTC thermistor or LDR
  - Pin C.3 Sensor 2 (digital IN) - switch - magnetic/touch/impact  
  - Pin C.4 Sensor 3 (analogue, readadc10) - NTC thermistor or LDR OR
  			  DS18B20 temperature sensor
  - 0V      -> Casio GND [sleeve of 2.5mm TRS jack, BLACK wire]
+
+ THE RECEIVE-SIDE CLAMP - separate from the 1N4148 above.
+ An FX-9750G Plus holds its transmit line at 4.75 V, measured. Run
+ this chip at 3.3 V and that lands above its own supply, so the 10k
+ limits the current to about 110 uA and the 1N5711 - 0.3 V forward -
+ conducts before the PIC's internal protection diode at 0.6 V and
+ takes the current first. Run the chip at 5 V (a PC USB port will do
+ it) and nothing exceeds the supply, so the Schottky never conducts
+ and costs nothing. An FX-9750GIII holds its line at 2.75 V and never
+ needs the clamp on either supply.
+ THE 10k IS IN SERIES ONLY. Nothing goes from C.1 to 0V: that makes a
+ divider, which drops a GIII's 2.75 V to about 1.8 V and breaks it.
+ Small-signal Schottky only - BAT85 or BAT43 will do, a 1N5817 will
+ not. 
 
  *** WHY A DIODE HERE AND NOT A SERIES RESISTOR ***
  The diode makes this an OPEN-DRAIN output: the PICAXE can only ever PULL
@@ -114,8 +131,11 @@
     up, which is what breaks the link.
   - BAR (cathode) TOWARD THE PICAXE. Reversed, nothing works.
 
- 1N4148 or 1N914. A Schottky is not required: the low sits near 0.6 V
- against a threshold near 0.82 V, and the drop falls as current falls.
+ 1N4148 or 1N914 ON THE TRANSMIT LINE. A Schottky is not required in
+ THAT position: the low sits near 0.6 V against a threshold near
+ 0.82 V, and the drop falls as current falls. This says nothing
+ about the receive line, which is a different problem - see the
+ 1N5711 note above.
  Verified on PICAXE, ESP8266, ESP32 and micro:bit V1/V2, 2026.
 
 ===============================================
@@ -184,7 +204,6 @@
 
 ; ===================================================================
 ;  DUAL-GENERATION BUILD - FX-9750G Plus AND FX-9750GIII
-;  2026
 ; ===================================================================
 ;
 ;  1. EVERY PACKET IS BUILT FIRST, THEN SENT.
@@ -255,10 +274,10 @@ symbol VNAME_T = "T"          ; sampling interval (via Send(T))
 ;  still turning round, so it mishears the byte and rejects the
 ;  exchange with $22.
 ;
-;  20 quarter-ms = 5 ms at m16. The 2007 figure. Applied INSIDE every
-;  send routine so a new one cannot forget it.
+;  SET TO 20 for 5 ms at m16 - wait before replying
+;  if you get a COM error - this may fix it.
 ; -------------------------------------------------------------------
-symbol TURNAROUND = 20
+symbol TURNAROUND = 0
 
 symbol MAX_DELAY_INTERVAL  = 300   ; 5 minutes = proven useful ceiling
 
@@ -455,7 +474,7 @@ symbol pollGuard    = w11     ; b22,b23 - the poll timeout counter.
                               ; zeroes it on entry every time and it is
                               ; dead outside the routine. 
 
-symbol POLL_GUARD   = 625     ; ~5 s at m16. Raised from 2500 (~2 s)
+symbol POLL_GUARD   = 6250    ; ~5 s at m16. Raised from 2500 (~2 s)
                               ; for FX-9750G Plus support.
                               ;
                               ; 5 s is DELIBERATELY GENEROUS, not a

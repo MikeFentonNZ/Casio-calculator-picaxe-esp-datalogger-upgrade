@@ -3,9 +3,9 @@
   CASIO FX-9750 <-> ARDUINO UNO R3   NSN DATALOGGER
   Normalised scientific notation - ONE value per Receive(, SIGNED.
 
- (C) Michael Fenton, MRSNZ, 2026
- Licence: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International 
- (CC BY-NC-SA 4.0)
+  (C) Michael Fenton, MRSNZ, 2026
+  Licence: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International 
+  (CC BY-NC-SA 4.0)  
 
  Two RECEIVE() windows (GAP 1 and GAP 2) discovered 2007/2008
  using Picaxe 18X connected to a Casio FX-9750G Plus. See the author's
@@ -17,6 +17,7 @@
 
  https://mikefentonnz.github.io/projects/casio-calculator-data-logger-hack.html
  ================================================================= 
+
  Version 1.0; 03/03/2026
  (Update of Picaxe 2.0 rework 10/10/2025,
   original version 1.0 code for Picaxe 18X invented 2007)
@@ -25,39 +26,41 @@
  bench-validated in 2025 / reconfirmed 2026 with 0% packet failure.
 
   *** STATUS: PROOF OF CONCEPT - A FOUNDATION TO BUILD ON ***
+  Validated against an FX-9750GIII and FX-9750G Plus: 
+  Receive(N), Send(T), then repeated
+  Receive(A)/(B)/(C) sampling at a set interval, values landing in the
+  calculator's Lists across multiple samples. The Uno is the fifth
+  validated platform.
+
  This is a reference implementation based on a validated method.
  It is deliberately minimal so that every line can be read and
  understood. It is NOT a finished classroom product and will not
  suit every use case. MODIFICATION IS EXPECTED.
-
- The Uno is the fifth validated platform.
 
  ===================================================================
   THE UNO HAS ONE HARDWARE UART AND THE USB PORT IS USING IT
  ===================================================================
   This is the same problem the micro:bit V2 solved by claiming UARTE1
   and the ESP8266 solved by swapping pins. On the Uno there is no
-  second UART to find, so there are two honest choices:
+  second UART to find, so there are two choices:
 
   CASIO_TRANSPORT_SOFT 1  (DEFAULT)
       SoftwareSerial on D8 and D9. The USB serial monitor stays, which
       matters on a board with no display and no other way to report.
       At 9600 baud on a 16 MHz AVR with nothing else running this is
-      reliable - the ESP8266's bit-banging failure was an 80 MHz part
-      with WiFi interrupts competing, which is not this situation.
+      reliable.
 
   CASIO_TRANSPORT_SOFT 0
       The hardware UART on D0/D1. Better timing, but D0/D1 are also
-      the USB bridge: the serial monitor is gone, AND THE CABLE MUST BE
-      UNPLUGGED TO UPLOAD A SKETCH. In a classroom that is a trap, so
-      it is not the default.
+      the USB bridge: the serial monitor is gone, AND THE CABLE MIGHT
+      NEED TO BE UNPLUGGED TO UPLOAD A SKETCH. In a classroom that is
+      a trap, so it is not the default.
 
   *** THE SOFTWARESERIAL RECEIVE BUFFER IS 64 BYTES. ***
   The calculator's request packet is 50. That fits, but only just, and
   anything left on the line from a previous transaction eats into the
   margin. Every abandoned transaction here calls flush_line() for that
-  reason. If short-packet counts start climbing on this board before
-  any other, suspect the buffer first.
+  reason. If short-packet counts start climbing suspect the buffer first.
 
  ===================================================================
   THE SENSORS
@@ -93,39 +96,24 @@
     - the waveform is a triangle that visibly reverses, not a ramp
       that could pass for a cooling curve or a rising temperature
 
+  A fault must never resemble a result. Simulated data is a fault by
+  definition: it is the absence of a measurement.
+
   *** TURN IT OFF BEFORE ANY REAL RUN. ***
-===================================================================
-  Consecutive RECEIVE() requests 
- ===================================================================
-  Each sensor is sent as its OWN value, in its own Receive(
-  transaction, in normalised scientific notation. The calculator
-  stores what arrives straight into a List:
-
-      Receive(N)   how many sensors    -> N
-      Send(T)      the interval        -> T
-      Receive(A)   sensor 1            -> List 2
-      Receive(B)   sensor 2            -> List 3   (only if N > 1)
-      Receive(C)   sensor 3            -> List 4   (only if N > 2)
-
-  SIGNED VALUES ARE NATIVE. Byte 14 of the value packet is the
-  sign/info byte: bit 0 says the magnitude is >= 1, and bits 6 and 4
-  together say NEGATIVE. So -12.5 travels as a negative number and
-  arrives as one. 
-
-  A fourth RECEIVE(D) could act as a diagnosttic status indicator
-
-  If a DS18B20 is not connected a 0 reading may be a fault or
-  mistaken for a genuine zero degress.
-  The Picaxe BASIC code checked the one-wire serial number to detect
-  if a DS18B20 was disconnected if configuration code said it was present.
-
-  Not enables here yet...
 
  ===================================================================
   HARDWARE  -  wire colours user choice
  ===================================================================
   - D8   <- from Casio TX [TIP of 2.5mm TRS, YELLOW]
   - D8   -> 4.7k pull-up to +5 V   *** REQUIRED, NOT OPTIONAL ***
+  - D8   -> 10k IN SERIES from the TIP, and a 1N5711 Schottky from
+            D8 to +5 V, BAND toward +5 V.  OPTIONAL ON THIS BOARD:
+            at 5 V nothing the calculator sends exceeds the supply,
+            so the Schottky never conducts. Fit it anyway and the
+            same cable also works on a 3.3 V ESP or micro:bit,
+            where it IS required with an FX-9750G Plus.
+            The 10k is IN SERIES ONLY - nothing from D8 to GND.
+            See INTERFACE-universal-wiring.md.
   - D9   -> to Casio RX   [RING of 2.5mm TRS, BLUE] via 1N4148 diode,
             BAR (cathode) TOWARD THE ARDUINO
   - GND  -> Casio GND     [SLEEVE of 2.5mm TRS, BLACK]
@@ -170,6 +158,32 @@
   to this board, or to any sensor wiring. NEVER use mains-connected
   equipment near water. Keep every sensor input within 0 V and +5 V.
 
+ ===================================================================
+  A FAULT MUST NEVER RESEMBLE A RESULT
+ ===================================================================
+    centred ADC        an unconnected pin reads a clearly wrong
+                       number, not a plausible zero.
+    clamp_to_range()   a reading beyond the packet's range is clamped
+                       AND recorded in saturatedMask.
+    SIMULATE_SENSORS   announces itself in the banner and on the LED.
+    the counters       every fault found in this project in August
+                       2026 was found by arithmetic on numbers like
+                       these. Add one for anything you add.
+
+ ===================================================================
+  THE CASIO PROGRAM
+ ===================================================================
+      Receive(N)   how many sensors    -> N
+      Send(T)      the interval        -> T
+      Receive(A)   sensor 1            -> List 2
+      Receive(B)   sensor 2            -> List 3   (only if N > 1)
+      Receive(C)   sensor 3            -> List 4   (only if N > 2)
+
+  SIGNED VALUES ARE NATIVE. Byte 14 of the value packet is the
+  sign/info byte: bit 0 says the magnitude is >= 1, and bits 6 and 4
+  together say NEGATIVE. 
+  The Casio program stores what arrives with no processing.
+ ===================================================================
 */
 
 #include <Arduino.h>
@@ -264,7 +278,7 @@ const uint8_t SENSOR_COUNT = 3;
 #define MAX_INTERVAL_S 300
 
 // ===================================================================
-// THE TURNAROUND DELAY  -  a 2007 lesson 
+// THE TURNAROUND DELAY - a 2007 lesson relearned 2026
 // ===================================================================
 // *** WAIT BEFORE REPLYING. THE CALCULATOR IS NOT READY YET. ***
 //
@@ -273,17 +287,12 @@ const uint8_t SENSOR_COUNT = 3;
 // its port is still changing direction, so it receives a mangled byte
 // and rejects the exchange.
 //
-// THIS WAS FOUND ON A PICAXE IN 2007 ona FX-9750G Plus. 
-// The symptom looks like a wiring fault rather than a timing
-// one: the calculator replies 0x22 - "I received something and it was
-// the wrong kind of thing" - which sends you hunting the cable.
-//
 // The delay is applied INSIDE every send function rather than at each
 // call site, so a new code path cannot forget it.
 //
-// 5 ms is the 2007 figure. It costs 5 ms per exchange against a
-// 180 ms transaction - under 3 % - and nothing in this project is
-// timing-critical at that scale, because the interval wait dwarfs it.
+// 5 ms is the 2007 figure from the Picaxe. It costs 5 ms per exchange 
+// against a 180 ms transaction, under 3 %, and nothing in this project
+// is timing-critical at that scale, because the interval wait dwarfs it.
 // Set to 0 to test whether it is still needed on your hardware.
 // ===================================================================
 #define TURNAROUND_MS 5
@@ -292,6 +301,57 @@ static inline void turnaround() {
 #if TURNAROUND_MS > 0
   delay(TURNAROUND_MS);
 #endif
+}
+
+// ===================================================================
+// PACED TRANSMISSION  -  required by the FX-9750G Plus
+// ===================================================================
+// An FX-9750G Plus refuses a packet whose bytes arrive back to back
+// and answers 0x22, which reads as a wiring or checksum fault and is
+// neither. It needs roughly one byte-time of idle BETWEEN bytes.
+//
+// WHY THIS BOARD NEEDS IT AND THE PICAXE DID NOT, until it was
+// "improved". SoftwareSerial::write is bit-banged per byte, but
+// Print::write(buf, len) loops over it with only a few microseconds
+// of AVR loop overhead in between - so a buffer write is effectively
+// GAPLESS. A PICAXE interpreter spends ~960 us per byte on loop and
+// gosub overhead and gets the gap for free; that is why the 2007 code
+// has always worked and why the modern 2025 PICAXE build broke when
+// it was rewritten to emit in blocks.
+//
+// Established on PICAXE:
+//   gapless block emission   refused 7 times out of 7
+//   ~960 us between bytes    accepted, 255 samples to "List Full"
+//
+// COST: 250 us per byte, so ~12 ms on a 50-byte packet and ~30 ms per
+// transaction. All of it falls inside a window where the calculator
+// is waiting anyway. No measurable effect.
+//
+// The gap also lets interrupts run between bytes, which SoftwareSerial
+// blocks during each byte - so millis() keeps better time, not worse.
+//
+// MEASURED on this board 2026 by bisection - nothing changed but the gap:
+//      1000 us -> logs correctly
+//       100 us -> logs correctly       (just over one bit period)
+//        75 us -> calculator stops with BREAK
+//    <= 50 us  -> Com ERROR
+// One BIT at 9600 baud is 104 us, and the boundary sits within a few
+// tens of microseconds of it. That is the requirement: roughly one
+// bit period of idle line between bytes. (One BYTE-time is 1042 us -
+// ten bits - which is a different number and not the one that matters.)
+// 250 us is the shipped value: comfortable margin, and it costs about
+// 12 ms on a 50-byte packet, all of it inside a window where the
+// calculator is waiting anyway.
+// ===================================================================
+#define CASIO_BYTE_GAP_US 250
+
+static void casio_write_paced(const uint8_t *buf, uint8_t len) {
+  for (uint8_t i = 0; i < len; i++) {
+    CasioSerial.write(buf[i]);
+#if CASIO_BYTE_GAP_US > 0
+    delayMicroseconds(CASIO_BYTE_GAP_US);
+#endif
+  }
 }
 
 // ===================================================================
@@ -444,8 +504,8 @@ uint8_t calculate_checksum(const uint8_t *packet) {
 // Timeouts use UNSIGNED SUBTRACTION on millis(), never a comparison
 // against a stored end time. millis() wraps after about 49 days, and
 // an end-time comparison set just before the wrap waits forever.
-// That exact bug was written and caught in this project in August
-// 2026, in a door lock that would have failed OPEN.
+// That exact bug was written and caught in this project in 2026
+// in a PIN encoded door lock that would have failed OPEN.
 // ===================================================================
 bool waitForByte(uint8_t &b, uint16_t timeoutMs) {
   uint32_t t0 = millis();
@@ -500,7 +560,7 @@ void send_nsn_value(int16_t signedValue) {
     packet[2]  = 0x01;
     packet[4]  = 0x01;
     packet[15] = 0xFE;
-    CasioSerial.write(packet, VALUE_PACKET_LEN);
+    casio_write_paced(packet, VALUE_PACKET_LEN);
     stats.valuePackets++;
     return;
   }
@@ -540,7 +600,7 @@ void send_nsn_value(int16_t signedValue) {
   packet[14] = exponent;
   packet[15] = calculate_checksum(packet);
 
-  CasioSerial.write(packet, VALUE_PACKET_LEN);
+  casio_write_paced(packet, VALUE_PACKET_LEN);
   stats.valuePackets++;
 }
 
@@ -570,7 +630,7 @@ void send_description(uint8_t vname) {
   memcpy_P(packet + 19, DESC_TAG, 10);
   for (uint8_t i = 29; i <= 48; i++) packet[i] = 0xFF;
   packet[49] = (uint8_t)(273 - vname);
-  CasioSerial.write(packet, REQUEST_PACKET_LEN);
+  casio_write_paced(packet, REQUEST_PACKET_LEN);
 }
 
 void send_end_packet() {
@@ -580,7 +640,7 @@ void send_end_packet() {
   packet[1] = 'E'; packet[2] = 'N'; packet[3] = 'D';
   for (uint8_t i = 4; i <= 48; i++) packet[i] = 0xFF;
   packet[49] = 0x56;
-  CasioSerial.write(packet, REQUEST_PACKET_LEN);
+  casio_write_paced(packet, REQUEST_PACKET_LEN);
   stats.endPackets++;
 }
 
@@ -641,7 +701,7 @@ void handle_receive(uint8_t vname) {
     stats.lastBadByte = b; stats.lastBadStage = 2; flush_line(); return;
   }
 
-  // == HOST-WAIT WINDOW: THE VALUE WINDOW (GAP 3) ==
+  // == FENTON 2025 HOST-WAIT WINDOW: THE VALUE WINDOW (GAP 3) ==
   // The calculator sits inside Receive() waiting for a number and it
   // will wait - for five minutes if asked - without the COM ERROR
   // every reference says should follow. 300 s is a chosen margin, not
@@ -806,7 +866,6 @@ void loop() {
   // than the packet's shape trusted. A read that has slipped by one
   // byte fails that checksum, which catches a desynchronisation when
   // it happens rather than several steps later.
-
   uint8_t rxBuf[REQUEST_PACKET_LEN];
   uint8_t got = read_block(rxBuf, REQUEST_PACKET_LEN, 2000);
 

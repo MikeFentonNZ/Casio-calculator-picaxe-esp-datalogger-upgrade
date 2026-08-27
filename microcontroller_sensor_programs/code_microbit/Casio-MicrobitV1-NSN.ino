@@ -25,6 +25,12 @@
  bench-validated in 2025 / reconfirmed 2026 with 0% packet failure.
 
   *** STATUS: PROOF OF CONCEPT - A FOUNDATION TO BUILD ON ***
+  Validated against an FX-9750GIII and FX-9750G Plus: 
+  Receive(N), Send(T), then repeated
+  Receive(A)/(B)/(C) sampling at a set interval, values landing in the
+  calculator's Lists across multiple samples. The Micro:bit is the fourth
+  validated platform.
+
  This is a reference implementation based on a validated method.
  It is deliberately minimal so that every line can be read and
  understood. It is NOT a finished classroom product and will not
@@ -89,7 +95,7 @@
   The Picaxe BASIC code checked the one-wire serial number to detect
   if a DS18B20 was disconnected if configuration code said it was present.
 
-  Not enables here yet...
+  Not enabled here yet...
 
  ===================================================================
   THE USB SERIAL MONITOR IS LOST, AND THAT IS MANAGEABLE
@@ -128,7 +134,22 @@
             BAR (cathode) TOWARD THE MICRO:BIT
   - P12  <- from Casio TX [TIP of 2.5mm TRS, YELLOW]
   - P12  -> 4.7k pull-up to 3V   *** REQUIRED, NOT OPTIONAL ***
+  - P12  -> 10k IN SERIES from the TIP, and a 1N5711 Schottky
+            from P12 to 3V, BAND toward 3V
+            *** REQUIRED WITH AN FX-9750G PLUS ***
   - GND  -> Casio GND     [SLEEVE of 2.5mm TRS, BLACK]
+
+  THE 10k AND THE SCHOTTKY - WHY THEY ARE HERE.
+  An FX-9750G Plus holds its transmit line at 4.75 V, measured.
+  This is a 3 V board, so that lands above its own supply. The 10k
+  limits the current to about 110 uA and the 1N5711 - 0.3 V forward
+  - conducts before the nRF's internal protection diode at 0.6 V
+  and takes the current first. An FX-9750GIII holds its line at
+  2.75 V, so with a GIII the Schottky never conducts and costs
+  nothing. Small-signal Schottky only: BAT85 or BAT43 will do, a
+  1N5817 will not - power Schottkys leak and lift the LOW level.
+  THE 10k IS IN SERIES ONLY. Nothing goes from P12 to GND: that
+  makes a divider, which drops a GIII's 2.75 V to about 1.8 V.
 
   WHY A DIODE AND NOT A SERIES RESISTOR. The diode makes the output
   OPEN-DRAIN: this board can only ever pull the line LOW, and the
@@ -210,8 +231,7 @@ const int buttonB = 11;
 // plotted, is exactly the shape of a diagnostic - and it is the same
 // statistics lesson as a cooling curve.
 //
-// UNDER NSN IT MATTERS MORE. There is no status field in a value
-// packet, so this channel is the only way the board can tell you
+// This channel is the only way the board can tell you
 // about itself while it is running.
 // ===================================================================
 #define DIAG_CHANNEL3      0
@@ -359,15 +379,71 @@ static void uart_check_errors() {
   if (e) { stats.uartErrors++; NRF_UART0->ERRORSRC = e; }
 }
 
+// ===================================================================
+// THE TURNAROUND DELAY - a 2007 lesson, relearned 2026
+// ===================================================================
+// The calculator does not switch from transmitting to listening
+// instantly. Reply into that turnaround and the first bits land while
+// its port is still changing direction: it mishears the byte and
+// answers 0x22, which reads as a wiring fault and is not one.
+//
+// Without a delay the trace read
+//     ATT 15  -> sent 13
+//     SHORT PACKET 1  bytes: 22
+// A GIII tolerates the fast reply. An FX-9750G Plus does not.
+//
+// It matters most on the SECOND and later samples, where our reply
+// follows the calculator drawing its display rather than following a
+// keypress - which is exactly when its port is least ready.
+//
+// Applied inside the write routines so a new code path cannot forget.
+// ===================================================================
+#define TURNAROUND_MS 5
+
+static inline void turnaround() {
+#if TURNAROUND_MS > 0
+  delay(TURNAROUND_MS);
+#endif
+}
+
+// ===================================================================
+// PACING  -  required by the FX-9750G Plus, and this chip has no
+//            other way of providing it
+// ===================================================================
+// A G Plus needs about ONE BIT PERIOD of idle line BETWEEN bytes -
+// 104 us at 9600 baud. On every other platform a second stop bit
+// supplies it for free. THE nRF51 UART CANNOT SEND TWO STOP BITS, so
+// this board must leave the gap in software, exactly as the PICAXE
+// and Arduino Uno builds do.
+//
+// TXDRDY releases the next write before the line has finished idling,
+// so without a delay the bytes go out back to back. The wait below is
+// one byte time PLUS the gap, which guarantees the previous byte has
+// left whatever TXDRDY actually means on this part.
+//
+// MEASURED on an Arduino Uno against a G Plus, 2026:
+//     100 us works    75 us gives BREAK    <=50 us gives Com ERROR
+// 250 us is ~3x the requirement.
+//
+// COST: ~1.3 ms per byte, so ~65 ms on a 50-byte packet, all of it
+// inside a window where the calculator is waiting anyway.
+//
+// A GIII does not need this and is unharmed by it.
+// ===================================================================
+#define CASIO_BYTE_GAP_US   250   // idle required BETWEEN bytes
+#define CASIO_BYTE_TIME_US 1042   // one 8N1 frame at 9600 = 10 bits
+
 void uart_write_byte(uint8_t b) {
   NRF_UART0->EVENTS_TXDRDY = 0;
   NRF_UART0->TXD = b;
   uint32_t t0 = millis();
   while (!NRF_UART0->EVENTS_TXDRDY && (millis() - t0) < 50) { }
   NRF_UART0->EVENTS_TXDRDY = 0;
+  delayMicroseconds(CASIO_BYTE_TIME_US + CASIO_BYTE_GAP_US);
 }
 
 void uart_write(const uint8_t *data, uint8_t len) {
+  turnaround();          // ONCE per packet, not once per byte
   for (uint8_t i = 0; i < len; i++) uart_write_byte(data[i]);
 }
 
@@ -781,6 +857,7 @@ void wait_for_interval() {
 // ===================================================================
 void handle_receive(uint8_t vname) {
   uint8_t b;
+  turnaround();
   uart_write_byte(CASIO_ACK);
 
   if (!uart_read_byte(b, 2000)) { send_end_packet(); return; }
@@ -793,7 +870,7 @@ void handle_receive(uint8_t vname) {
   if (b != CASIO_ACK) { stats.lastBadByte = b; stats.lastBadStage = 2;
                         flush_line(); return; }
 
-  // == HOST-WAIT WINDOW: THE VALUE WINDOW (GAP 3) ==
+  // == FENTON 2025 HOST-WAIT WINDOW: THE VALUE WINDOW (GAP 3) ==
   // The heart of it. The calculator is inside Receive() waiting for a
   // number and it will wait - for five minutes if asked - without the
   // COM ERROR every reference says should follow.
@@ -830,6 +907,7 @@ void handle_receive(uint8_t vname) {
 // THE CALCULATOR IS SENDING US A NUMBER  -  Send(T)
 // ===================================================================
 void handle_incoming() {
+  turnaround();
   uart_write_byte(CASIO_ACK);
 
   uint8_t packet[VALUE_PACKET_LEN];
@@ -855,6 +933,7 @@ void handle_incoming() {
   if (value > MAX_INTERVAL_S) value = MAX_INTERVAL_S;
   timeInterval = value;
 
+  turnaround();
   uart_write_byte(CASIO_ACK);
 
   uint8_t junk[REQUEST_PACKET_LEN];
@@ -930,6 +1009,7 @@ void loop() {
     return;
   }
 
+  turnaround();
   uart_write_byte(DEVICE_PRESENT);
 
   // ===============================================================
