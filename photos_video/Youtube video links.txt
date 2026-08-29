@@ -11,5 +11,9 @@ https://youtu.be/UJegjTEAs5A   - Apple II Transylvania remake for modern web bro
 Props and models – perspective and engineering in science fiction – music track for “Land of the Giants” TV
 https://youtu.be/s1xazris0Pk  - Ballad of the Spindrift
 
-Casio videos - more coming
+Casio calculator demonstration videos 
 https://youtu.be/GLPgoy_6pYA  - 2025 demonstration video
+https://www.youtube.com/j07YRWUmnFo - ESP32
+https://www.youtube.com/1iDPcnTAIhg - Arduino Uno R3
+https://www.youtube.com/ulXrOckG5Lw - BBC Microbit V1 & V2
+https://www.youtube.com/khCzVW4PZOY - Picaxe 08M2 & 14M2
