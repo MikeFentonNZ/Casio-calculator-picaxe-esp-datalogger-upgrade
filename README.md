@@ -26,7 +26,7 @@ These positions are called **host-wait windows**. The priority disclosure below 
 
 The simplest build is a Casio FX-9750 or FX-9860 graphing calculator, a microcontroller costing a few dollars, and a cross-over cable. Sensor readings arrive at a set interval and land in the calculator's own lists, where the graphing and statistics tools students already know are waiting for them.
 
-For a few dollars more, the Casio can log data from remote sensors wirelessly and serve a web page with data to smart devices including phones, tablets, and laptops.
+For a few dollars more, the Casio can log data from remote sensors wirelessly and serve a web page with data to smart devices including phones, tablets, and laptops. The same board can also drive a **Bluetooth** device and read telemetry back from it, which turns the calculator into a control surface for hardware that has no keypad of its own.
 
 The calculator needs no modification or firmware change. It does not need to know what is on the other end of the cross-over cable.
 
@@ -47,8 +47,8 @@ The encoding method is withheld pending peer-reviewed publication.
 
 Files are being released in stages. All Casio BASIC and microcontroller code is available. Student / teacher material is now available.
 
-* `casio_calculator_program` — the Casio BASIC datalogger program in `.txt` and `.g1m` form, a key-code utility, and installation notes. Casio BASIC for the FX-9750G Plus is in .txt format.
-* `microcontroller_sensor_programs` - Picaxe, ESP8266, ESP32, micro:bit and Arduino programs. The Picaxe BASIC code is compatible with the FX-9750G Plus.
+* `casio_calculator_program` — the Casio BASIC datalogger program in `.txt` and `.g1m` form, a key-code utility, and installation notes. Casio BASIC for the FX-9750G Plus is in .txt format. Also `R2D2-RC` and `R2D2TEST`, the two-step remote control and the telemetry display for the Hasbro Smart R2D2 Bluetooth droid build.
+* `microcontroller_sensor_programs` - Picaxe, ESP8266, ESP32, micro:bit and Arduino programs. The Picaxe BASIC code is compatible with the FX-9750G Plus. Includes `code-hasbro-r2d2-droidx`, the ESP32 Bluetooth droid controller with its Hasbro Smart R2D2 DroidX web app built in.
 * `original_2007-2010_classroom_research` — the 2008 education research report, conference presentations, sensor builds,and analysis of classroom use.
 * `photos_video` — Casio serial protocol diagrams, assembly, and use.
 * `original_2007-2010-classroom-research` — the 2008 education research report, conference presentations, sensor builds,and analysis of classroom use.
@@ -72,6 +72,7 @@ Files are being released in stages. All Casio BASIC and microcontroller code is 
 * **Both ESP boards keep exact time at 1 Hz:** Verified in trials against an external timer.
 * **Optional wireless link:** on ESP32 hardware an ESP-NOW link has been proven through a house, across 20 metres and into a metal three-bay shed. In open air, 200-plus metres, measured repeatedly.
 * **A DS18B20 temperature sensor costs a Picaxe 750 ms per reading:** The picaxe chip's clock stopped throughout. That is a 16 % time-axis error at a 5-second interval. Use 30 seconds or longer for a rate, or use an ESP board, which does not have this problem.
+* **Bluetooth LE device control:** on ESP32 hardware the calculator drives a Bluetooth LE device through the board and reads telemetry back from it, while the same board serves a control page over its own WiFi access point. Both control surfaces work at the same time and neither knows the other is there. Verified on an FX-9750G Plus and an FX-9750GIII.
 * **Interface:** Casio SB-62, 3-pin serial at 9600 baud. The FX-9750GIII port is 3.3 V logic; older FX-9750G Plus calculators are 5 V logic.
 
 ## More than data logging:
@@ -81,6 +82,7 @@ Files are being released in stages. All Casio BASIC and microcontroller code is 
 * **A user-triggered field survey logger:** Combining microcontroller-maintained elapsed-time recording and user-entered categorical observation. For example, using single numeric keys 0–9 provide 10 categories; alpha keys A–Z provide more categories for applications requiring finer classification. Examples: geological substrate (1 = scoria, 2 = sand, 3 = basalt), vegetation type, land use class, or surface condition.
 * **Human-machine-interface:** The calculator transmits user-entered numerical values to the microcontroller via the serial interface. The calculator’s tamper-evident keypad and display provide a secure input mechanism for applications requiring user-generated discrete values. One group sets up a model door lock with a 4-digit PIN and no lockout. A second group is asked to open it without being told the code. Teaches coding, cyber security, building systems safety, and the rule 'the secret belongs with the thing being protected, not with the thing a user is holding.
 * **IMC simulator:** The Casio calculator and connected microcontroller form a closed-loop measurement and control system. The microcontroller reads one or more sensors, transmits them to the calculator for display. The student observes the live readings, makes a control decision, and transmits a control value back to the microcontroller via the calculator keypad. The microcontroller receives that value and adjusts a physical output accordingly; motor speed, heater power, valve position, or light intensity. The student then observes the effect of their intervention in the next sensor reading.
+* **Bluetooth robot control — a toy brought back from the dead:** A Hasbro Smart R2-D2 (2016) whose Android app will no longer install on any current phone. The app was built with a Unity version of that year and ships 32-bit native libraries only; modern phones are 64-bit. **Nothing in the robot has failed** — its motors turn, its lamps light, it still advertises over Bluetooth — but the software died and took the toy with it. An ESP32 puts the calculator in charge of it over Bluetooth LE, and serves **DroidX**, a block-coding page from its own WiFi access point, so a phone or tablet drives it with no app, no store, no account and no internet. The calculator reads back the droid's own infrared proximity and head position while it runs. **Planned obsolescence made concrete:** start with a robot that will not switch on, ask why, and find the answer is neither mechanical nor electrical but a library nobody will rebuild — then fix it anyway. See `microcontroller_sensor_programs/code-hasbro-r2d2-droidx`.
 * **Over distance:** On ESP32 hardware an ESP-NOW radio link has been proven through a house, across twenty metres, and into a metal three-bay shed. That matters more than a clear-air figure, because a shed is the sort of place a measurement actually has to come from. In open air the range is 200-plus metres, measured repeatedly. Remote sensing using Microbit radio is another option.
 * **Sharing live data:** Both ESP builds run their own WiFi access point and serve a status page and a CSV download to phones and laptops while logging continues, with no reading lost. Two clients at once has been tested.
 
@@ -115,7 +117,6 @@ Files are being released in stages. All Casio BASIC and microcontroller code is 
 ### Use it - Across subjects
 
 A graphing calculator is bought for one reason: mathematics requires it. It is a significant purchase for a family, it is carried for three to five years, and for most of that time it does one thing. This gives the same device further uses, in further subjects, without altering it in any way.
-
 
 
 #### Mathematics

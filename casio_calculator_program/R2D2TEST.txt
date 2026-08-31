@@ -1,0 +1,50 @@
+ Casio BASIC code for Casio-ESP32-DroidX.ino
+ R2D2TEST - droid telemetry display
+ This code runs on FX-9750G Plus and FX-9750GIII
+ (C) Michael Fenton, MRSNZ, 2026
+ Licence: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International 
+ (CC BY-NC-SA 4.0)
+ 
+ The calculator reads three values back from a Bluetooth droid.
+
+ A  infrared proximity, the reflected signal, in counts
+ B  app-mode hold age, in tenths of a second
+ C  head position; 0 left, 1 centre, 2 right, 3 in transit
+
+ Any of them reads -999 when the value is not available. -99.9 of any of
+ these is not a plausible reading, so a fault cannot be mistaken for a
+ measurement.
+
+ ALL Receive( CALLS COME BEFORE ANY DISPLAY WORK. On an FX-9750G Plus a
+ program that draws between consecutive Receive( calls will fail, because
+ the next Receive( begins while the machine is still drawing. Read all
+ three, then draw.
+
+ Receive(N) returns 3 and is called once, outside the loop, so it costs
+ nothing per cycle.
+
+ Discovered 2007/2008 using a Picaxe 18X connected to a Casio FX-9750G Plus.
+ See the author's New Zealand Ministry of Education E-Learning Fellowship
+ report and conference paper;
+
+ 1) Authentic Learning Using Mobile Sensor Technology (2008): https://doi.org/10.5281/zenodo.19302276
+ 2) RIGEL - Learning From Life, Kuala Lumpur (2009): https://doi.org/10.5281/zenodo.19334228
+
+ https://mikefentonnz.github.io/projects/casio-calculator-r2d2-droidx.html
+
+
+ClrText
+Receive(N)
+Lbl 1
+Receive(A)
+Receive(B)
+Receive(C)
+ClrText
+Locate 1,1,"IR:"
+Locate 6,1,A
+Locate 1,2,"HOLD AGE:"
+Locate 12,2,B
+Locate 1,3,"HEAD:"
+Locate 7,3,C
+Locate 1,5,"-999 = NO DROID"
+Goto 1

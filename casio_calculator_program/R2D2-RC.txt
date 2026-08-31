@@ -1,0 +1,83 @@
+ Casio BASIC code for Casio-ESP32-DroidX.ino
+ R2D2-RC - two-step remote control, with range checking
+ This code runs on FX-9750G Plus and FX-9750GIII
+ (C) Michael Fenton, MRSNZ, 2026
+ Licence: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International 
+ (CC BY-NC-SA 4.0)
+ 
+ The calculator's keypad drives a Bluetooth droid.
+
+ Two-step: send the parameter number, then send its value. The calculator
+ can only send a bare number, so the label goes first and is remembered.
+ That is also the shape of the droid's own protocol, an opcode followed
+ by a payload.
+
+ 1 head position    0 left, 1 centre, 2 right
+ 2 drive motor      0 stop, 1 forward, 2 backward
+ 3 cam position     0 to 8
+ 4 lamp red         0 to 100 percent
+ 5 lamp blue        0 to 100 percent
+ 6 sound            0 to 174
+ 7 lamp sequence    0 to 264
+ 8 motion sequence  0 to 477
+ 9 stop everything  value ignored
+
+ THE CHECK IS THE LESSON. The student is told the range before typing,
+ and a value outside it never leaves the calculator. The board checks
+ again, because it cannot assume the program at the other end is this one.
+
+ POWER-DOWN IS DELIBERATELY ABSENT. A typing error should not end the
+ lesson.
+
+ THE DRIVE MOTOR RUNS UNTIL IT IS STOPPED. Keep the droid on the floor
+ and clear of stairs. Parameter 9 stops everything.
+
+ Discovered 2007/2008 using a Picaxe 18X connected to a Casio FX-9750G Plus.
+ See the author's New Zealand Ministry of Education E-Learning Fellowship
+ report and conference paper;
+
+ 1) Authentic Learning Using Mobile Sensor Technology (2008): https://doi.org/10.5281/zenodo.19302276
+ 2) RIGEL - Learning From Life, Kuala Lumpur (2009): https://doi.org/10.5281/zenodo.19334228
+
+ https://mikefentonnz.github.io/projects/casio-calculator-r2d2-droidx.html
+
+
+ClrText
+Locate 1,1,"1HEAD 2DRIVE 3CAM"
+Locate 1,2,"4RED 5BLUE 6SOUND"
+Locate 1,3,"7LEDSQ 8MOTSQ 9STOP"
+Locate 1,4,"Select 1-9?"
+?->P
+If P<1 Or P>9
+Then "BAD PARAMETER"
+Stop
+IfEnd
+0->M
+If P=1 Or P=2
+Then 2->M
+IfEnd
+If P=3
+Then 8->M
+IfEnd
+If P=4 Or P=5
+Then 100->M
+IfEnd
+If P=6
+Then 174->M
+IfEnd
+If P=7
+Then 264->M
+IfEnd
+If P=8
+Then 477->M
+IfEnd
+Locate 1,5,"Value 0 to"
+Locate 12,5,M
+?->V
+If V<0 Or V>M
+Then "OUT OF RANGE"
+Stop
+IfEnd
+Send(P)
+Send(V)
+Locate 1,6,"Sent"

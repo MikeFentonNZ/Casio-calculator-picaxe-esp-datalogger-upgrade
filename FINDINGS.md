@@ -37,6 +37,21 @@ Gaps 1 and 4 are real and deliberately unused: gap 1 is too early to give a fres
 
 300 seconds is a chosen margin, not an observed limit. A successful long pause does not make the next one safe: fit fresh cells before any long unattended run.
 
+**A limitation of the window, and its remedy — established on hardware 30–31 August 2026.**
+
+Every endpoint this work had served was indifferent to how long the device sat inside a host-wait window. A heater does not care. A thermistor does not notice. **That is a property of those endpoints, not of the method**, and it does not hold in general.
+
+An endpoint with a timebase of its own is starved by an unbounded wait, if the packet that endpoint expects is serviced from the same loop that is blocked.
+
+* **The limitation.** The host wait is not free. It is free only of consequences the *calculator* can see.
+* **The remedy.** Service that packet from an independent task or timer. The calculator's transaction time then ceases to be a constraint at all — and the same structure allows a second control surface, a web UI on the same board, at no measured cost.
+
+Both arms are selectable at compile time in the released build, so the claim is testable by anyone holding the hardware, in one edit.
+
+**The failure is silent, which is why the age of that packet is spent on one of the calculator's own values.** In the endpoint tested — a Bluetooth LE toy — starvation does not drop the link: telemetry keeps arriving and commands are still obeyed while the endpoint quietly stops deferring to its controller. In one measured run, 52 calculator cycles and 156 transactions completed with **every error counter at zero** throughout. Under the remedy the packet's age stays small however long the calculator takes; under the fault it cannot fall below the length of the wait, because nothing can have fired during it. **A reading below that floor is producible one way only**, which makes it a refutation rather than a correlation.
+
+The class is larger than one device: any session-based endpoint that expects to hear from its controller on a schedule has this shape — BLE, MQTT, anything with a claim or liveness mechanism.
+
 \---
 
 ## 2\. Autonomous interval logging — invention
@@ -128,6 +143,7 @@ Status is stated per row. All of these are built.
 |**Analysis terminal**|the calculator's own regression and statistics tools, on data it captured|classroom-validated|
 |**Remote control / HMI**|the calculator's keypad sends values to the device, which acts on them|demonstrated 2008 (robot); model door lock tested 2026|
 |**Closed-loop measurement and control**|the two combined — observe, decide, act, observe the effect|implemented, not classroom-trialled|
+|**Device control over Bluetooth LE**|the calculator drives a BLE device through the microcontroller and reads its telemetry back; a block-coding web app served from the same board gives a second, simultaneous control surface|built, hardware-verified August 2026|
 
 
 
